@@ -102,20 +102,23 @@ public:
                          ggml_tensor* input,
                          ggml_tensor* positions,
                          MiniCPMKVCache& kv_cache,
-                         bool is_causal = true);
+                         bool is_causal = true,
+                         bool write_kv_cache = true);
 
     ggml_tensor* forward_step(VoxCPMContext& ctx,
                               ggml_tensor* input,
                               int position,
                               ggml_tensor* positions,
                               MiniCPMKVCache& kv_cache,
-                              bool is_causal = true);
+                              bool is_causal = true,
+                              bool write_kv_cache = true);
 
     ggml_tensor* forward_step(VoxCPMContext& ctx,
                               ggml_tensor* input,
                               int position,
                               MiniCPMKVCache& kv_cache,
-                              bool is_causal = true);
+                              bool is_causal = true,
+                              bool write_kv_cache = true);
 
     const MiniCPMConfig& config() const { return config_; }
     const MiniCPMWeights& weights() const { return weights_; }
@@ -137,7 +140,8 @@ private:
                                    int layer_idx,
                                    int n_tokens,
                                    int n_past,
-                                   bool is_causal) const;
+                                   bool is_causal,
+                                   bool write_kv_cache) const;
 
     ggml_tensor* mlp_forward(ggml_context* ctx,
                              ggml_tensor* hidden,
@@ -152,7 +156,8 @@ private:
                                int layer_idx,
                                int n_tokens,
                                int n_past,
-                               bool is_causal) const;
+                               bool is_causal,
+                               bool write_kv_cache) const;
 
     bool update_config_from_gguf(gguf_context* gguf_ctx, const std::string& prefix);
     bool init_aux_tensors(VoxCPMBackend& backend);

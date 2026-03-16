@@ -21,30 +21,6 @@ class VoxCPMBackend;
 class VoxCPMImatrixCollector;
 class VoxCPMWeightStore;
 
-struct VoxCPMDecodeState {
-    std::unique_ptr<MiniCPMKVCache> base_lm_cache;
-    std::unique_ptr<MiniCPMKVCache> residual_lm_cache;
-    std::vector<float> lm_hidden;
-    std::vector<float> residual_hidden;
-    int current_position = 0;
-    std::vector<float> prefix_feat_cond;  // [patch_size, feat_dim] in patch-major order
-    int streaming_prefix_len = 3;
-
-    VoxCPMDecodeState() = default;
-    ~VoxCPMDecodeState() = default;
-
-    VoxCPMDecodeState(const VoxCPMDecodeState&) = delete;
-    VoxCPMDecodeState& operator=(const VoxCPMDecodeState&) = delete;
-    VoxCPMDecodeState(VoxCPMDecodeState&&) noexcept = default;
-    VoxCPMDecodeState& operator=(VoxCPMDecodeState&&) noexcept = default;
-};
-
-struct VoxCPMDecodeResult {
-    std::vector<float> output_0;  // [patch_size, feat_dim] in patch-major order
-    VoxCPMDecodeState output_1;
-    bool output_2 = false;
-};
-
 struct VoxCPMCachedGraph {
     std::unique_ptr<VoxCPMContext> context;
     ggml_cgraph* graph = nullptr;
@@ -63,6 +39,32 @@ struct VoxCPMCachedGraph {
         input3 = nullptr;
         output = nullptr;
     }
+};
+
+struct VoxCPMDecodeState {
+    std::unique_ptr<MiniCPMKVCache> base_lm_cache;
+    std::unique_ptr<MiniCPMKVCache> residual_lm_cache;
+    std::vector<float> lm_hidden;
+    std::vector<float> residual_hidden;
+    int current_position = 0;
+    std::vector<float> prefix_feat_cond;  // [patch_size, feat_dim] in patch-major order
+    int streaming_prefix_len = 3;
+    std::unordered_map<int, VoxCPMCachedGraph> base_lm_step_graphs;
+    std::unordered_map<int, VoxCPMCachedGraph> residual_lm_step_graphs;
+
+    VoxCPMDecodeState() = default;
+    ~VoxCPMDecodeState() = default;
+
+    VoxCPMDecodeState(const VoxCPMDecodeState&) = delete;
+    VoxCPMDecodeState& operator=(const VoxCPMDecodeState&) = delete;
+    VoxCPMDecodeState(VoxCPMDecodeState&&) noexcept = default;
+    VoxCPMDecodeState& operator=(VoxCPMDecodeState&&) noexcept = default;
+};
+
+struct VoxCPMDecodeResult {
+    std::vector<float> output_0;  // [patch_size, feat_dim] in patch-major order
+    VoxCPMDecodeState output_1;
+    bool output_2 = false;
 };
 
 class VoxCPMRuntime {
@@ -149,9 +151,14 @@ private:
     void maybe_collect_graph(ggml_cgraph* graph);
     void clear_cached_graphs();
     VoxCPMCachedGraph& ensure_locenc_patch_graph();
+    VoxCPMCachedGraph& ensure_locenc_sequence_graph(int seq_len);
     VoxCPMCachedGraph& ensure_embedding_graph(int token_count);
     VoxCPMCachedGraph& ensure_enc_to_lm_projection_graph(int seq_len);
     VoxCPMCachedGraph& ensure_fsq_2d_graph(int seq_len);
+    VoxCPMCachedGraph& ensure_unified_cfm_graph(int n_timesteps, float cfg_value);
+    VoxCPMCachedGraph& ensure_decode_front_half_graph(int n_timesteps, float cfg_value);
+    VoxCPMCachedGraph& ensure_state_base_lm_step_graph(VoxCPMDecodeState& state, int position);
+    VoxCPMCachedGraph& ensure_state_residual_lm_step_graph(VoxCPMDecodeState& state, int position);
     VoxCPMCachedGraph& ensure_stop_predictor_graph();
     VoxCPMCachedGraph& ensure_locenc_patch_to_lm_embed_graph();
 
@@ -211,9 +218,12 @@ private:
     VoxCPMImatrixCollector* imatrix_collector_ = nullptr;
     std::shared_ptr<VoxCPMWeightStore> weight_store_;
     VoxCPMCachedGraph locenc_patch_graph_;
+    std::unordered_map<int, VoxCPMCachedGraph> locenc_sequence_graphs_;
     std::unordered_map<int, VoxCPMCachedGraph> embedding_graphs_;
     std::unordered_map<int, VoxCPMCachedGraph> enc_to_lm_projection_graphs_;
     std::unordered_map<int, VoxCPMCachedGraph> fsq_2d_graphs_;
+    std::unordered_map<std::string, VoxCPMCachedGraph> unified_cfm_graphs_;
+    std::unordered_map<std::string, VoxCPMCachedGraph> decode_front_half_graphs_;
     VoxCPMCachedGraph stop_predictor_graph_;
     VoxCPMCachedGraph locenc_patch_to_lm_embed_graph_;
 };

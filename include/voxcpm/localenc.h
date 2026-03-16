@@ -42,6 +42,10 @@ public:
     // output: [hidden_size] (CLS token output)
     ggml_tensor* forward_patch(VoxCPMContext& ctx, ggml_tensor* input);
 
+    // input: [feat_dim, patch_size, seq_len] or [hidden_size, patch_size, seq_len]
+    // output: [hidden_size, seq_len] (one encoded vector per patch)
+    ggml_tensor* forward_sequence(VoxCPMContext& ctx, ggml_tensor* input);
+
     const MiniCPMConfig& config() const { return encoder_.config(); }
     const LocEncWeights& weights() const { return weights_; }
     int feat_dim() const { return feat_dim_; }

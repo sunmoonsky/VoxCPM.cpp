@@ -511,7 +511,8 @@ ggml_tensor* MiniCPMModel::attention_forward(ggml_context* ctx,
                                              int layer_idx,
                                              int n_tokens,
                                              int n_past,
-                                             bool is_causal) const {
+                                             bool is_causal,
+                                             bool write_kv_cache) const {
     const int head_dim = config_.head_dim();
     const int total_len = n_past + n_tokens;
 
@@ -528,10 +529,13 @@ ggml_tensor* MiniCPMModel::attention_forward(ggml_context* ctx,
     q = apply_rope(ctx, q, positions, total_len);
     k = apply_rope(ctx, k, positions, total_len);
 
-    ggml_tensor* k_write = ggml_cpy(ctx, k, kv_cache.get_k_batch(ctx, layer_idx, n_past, n_tokens));
-    ggml_tensor* v_write = ggml_cpy(ctx, v, kv_cache.get_v_batch(ctx, layer_idx, n_past, n_tokens));
-    ggml_tensor* kv_sync = ggml_add(ctx, ggml_sum(ctx, k_write), ggml_sum(ctx, v_write));
-    kv_sync = ggml_scale(ctx, kv_sync, 0.0f);
+    ggml_tensor* kv_sync = nullptr;
+    if (write_kv_cache) {
+        ggml_tensor* k_write = ggml_cpy(ctx, k, kv_cache.get_k_batch(ctx, layer_idx, n_past, n_tokens));
+        ggml_tensor* v_write = ggml_cpy(ctx, v, kv_cache.get_v_batch(ctx, layer_idx, n_past, n_tokens));
+        kv_sync = ggml_add(ctx, ggml_sum(ctx, k_write), ggml_sum(ctx, v_write));
+        kv_sync = ggml_scale(ctx, kv_sync, 0.0f);
+    }
     ggml_tensor* k_cur = ggml_permute(ctx, k, 0, 2, 1, 3);
     ggml_tensor* v_cur = ggml_permute(ctx, v, 0, 2, 1, 3);
 
@@ -551,7 +555,9 @@ ggml_tensor* MiniCPMModel::attention_forward(ggml_context* ctx,
     ggml_tensor* attn = ggml_flash_attn_ext(ctx, q, k_all, v_all, mask,
                                             1.0f / std::sqrt(static_cast<float>(head_dim)),
                                             0.0f, 0.0f);
-    attn = ggml_add1(ctx, attn, kv_sync);
+    if (kv_sync) {
+        attn = ggml_add1(ctx, attn, kv_sync);
+    }
     attn = ggml_reshape_2d(ctx, attn, config_.n_heads * head_dim, n_tokens);
     return ggml_mul_mat(ctx, lw.o_proj, attn);
 }
@@ -574,11 +580,12 @@ ggml_tensor* MiniCPMModel::layer_forward(ggml_context* ctx,
                                          int layer_idx,
                                          int n_tokens,
                                          int n_past,
-                                         bool is_causal) const {
+                                         bool is_causal,
+                                         bool write_kv_cache) const {
     ggml_tensor* residual = hidden;
     ggml_tensor* normed = rms_norm(ctx, hidden, lw.input_layernorm);
     ggml_tensor* attn_out = attention_forward(ctx, normed, positions, causal_mask, lw, kv_cache,
-                                              layer_idx, n_tokens, n_past, is_causal);
+                                              layer_idx, n_tokens, n_past, is_causal, write_kv_cache);
     if (config_.use_mup) {
         attn_out = ggml_scale(ctx, attn_out, residual_scale_);
     }
@@ -597,7 +604,8 @@ ggml_tensor* MiniCPMModel::forward(VoxCPMContext& ctx,
                                    ggml_tensor* input,
                                    ggml_tensor* positions,
                                    MiniCPMKVCache& kv_cache,
-                                   bool is_causal) {
+                                   bool is_causal,
+                                   bool write_kv_cache) {
     VOXCPM_ASSERT(input != nullptr);
 
     ggml_context* raw = ctx.raw_context();
@@ -610,7 +618,7 @@ ggml_tensor* MiniCPMModel::forward(VoxCPMContext& ctx,
     ggml_tensor* hidden = input;
     ggml_tensor* causal_mask = is_causal ? create_causal_mask(raw, positions, n_tokens) : nullptr;
     for (int i = 0; i < config_.n_layer; ++i) {
-        hidden = layer_forward(raw, hidden, positions, causal_mask, weights_.layers[i], kv_cache, i, n_tokens, 0, is_causal);
+        hidden = layer_forward(raw, hidden, positions, causal_mask, weights_.layers[i], kv_cache, i, n_tokens, 0, is_causal, write_kv_cache);
     }
     return rms_norm(raw, hidden, weights_.norm);
 }
@@ -619,8 +627,9 @@ ggml_tensor* MiniCPMModel::forward_step(VoxCPMContext& ctx,
                                         ggml_tensor* input,
                                         int position,
                                         MiniCPMKVCache& kv_cache,
-                                        bool is_causal) {
-    return forward_step(ctx, input, position, nullptr, kv_cache, is_causal);
+                                        bool is_causal,
+                                        bool write_kv_cache) {
+    return forward_step(ctx, input, position, nullptr, kv_cache, is_causal, write_kv_cache);
 }
 
 ggml_tensor* MiniCPMModel::forward_step(VoxCPMContext& ctx,
@@ -628,7 +637,8 @@ ggml_tensor* MiniCPMModel::forward_step(VoxCPMContext& ctx,
                                         int position,
                                         ggml_tensor* positions,
                                         MiniCPMKVCache& kv_cache,
-                                        bool is_causal) {
+                                        bool is_causal,
+                                        bool write_kv_cache) {
     VOXCPM_ASSERT(input != nullptr);
     VOXCPM_ASSERT(position >= 0 && position < config_.max_length);
 
@@ -644,9 +654,10 @@ ggml_tensor* MiniCPMModel::forward_step(VoxCPMContext& ctx,
         positions = ggml_view_1d(raw, pos_tensor_, 1, static_cast<size_t>(position) * sizeof(int32_t));
     }
 
-    ggml_tensor* causal_mask = is_causal ? create_causal_mask(raw, positions, position + 1) : nullptr;
+    // Single-token decode never attends to future positions, so the mask is redundant.
+    ggml_tensor* causal_mask = nullptr;
     for (int i = 0; i < config_.n_layer; ++i) {
-        hidden = layer_forward(raw, hidden, positions, causal_mask, weights_.layers[i], kv_cache, i, 1, position, is_causal);
+        hidden = layer_forward(raw, hidden, positions, causal_mask, weights_.layers[i], kv_cache, i, 1, position, is_causal, write_kv_cache);
     }
 
     hidden = rms_norm(raw, hidden, weights_.norm);
