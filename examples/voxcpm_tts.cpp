@@ -96,6 +96,19 @@ bool env_flag_enabled(const char* name) {
     return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
+int env_int_or_default(const char* name, int default_value) {
+    const char* raw = std::getenv(name);
+    if (!raw || raw[0] == '\0') {
+        return default_value;
+    }
+
+    try {
+        return std::max(1, std::stoi(raw));
+    } catch (const std::exception&) {
+        return default_value;
+    }
+}
+
 double bytes_to_mib(size_t bytes) {
     return static_cast<double>(bytes) / (1024.0 * 1024.0);
 }
@@ -672,6 +685,8 @@ int main(int argc, char** argv) {
         const Options options = parse_args(argc, argv);
         constexpr int kStreamingPrefixLen = 3;
         const bool log_memory = env_flag_enabled("VOXCPM_LOG_MEMORY_BREAKDOWN");
+        const bool log_decode_memory = env_flag_enabled("VOXCPM_LOG_DECODE_MEMORY");
+        const int log_decode_memory_every = env_int_or_default("VOXCPM_LOG_DECODE_MEMORY_EVERY", 1);
 
         VoxCPMBackend backend(options.backend, options.threads);
         std::cerr << "Using backend: " << backend_type_name(backend.type())
@@ -764,6 +779,11 @@ int main(int argc, char** argv) {
                                                        options.cfg_value);
             generated_steps.insert(generated_steps.end(), result.output_0.begin(), result.output_0.end());
             state = std::move(result.output_1);
+
+            if (log_decode_memory && ((step + 1) % log_decode_memory_every == 0 || result.output_2)) {
+                const std::string stage = "decode_step_" + std::to_string(step + 1);
+                log_memory_breakdown(true, stage.c_str(), *store, backend, &state);
+            }
 
             if (options.stream) {
                 append_stream_frame(stream_recent_frames,

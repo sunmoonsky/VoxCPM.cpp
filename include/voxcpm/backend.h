@@ -173,6 +173,13 @@ public:
         tensor_get(tensor, data, 0, ggml_nbytes(tensor));
     }
 
+    /**
+     * @brief Copy tensor data between backend-resident tensors
+     * @param src Source tensor
+     * @param dst Destination tensor
+     */
+    void tensor_copy(ggml_tensor* src, ggml_tensor* dst);
+
     // =========================================================================
     // Utilities
     // =========================================================================

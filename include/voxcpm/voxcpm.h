@@ -49,8 +49,10 @@ struct VoxCPMDecodeState {
     int current_position = 0;
     std::vector<float> prefix_feat_cond;  // [patch_size, feat_dim] in patch-major order
     int streaming_prefix_len = 3;
-    std::unordered_map<int, VoxCPMCachedGraph> base_lm_step_graphs;
-    std::unordered_map<int, VoxCPMCachedGraph> residual_lm_step_graphs;
+    VoxCPMCachedGraph base_lm_step_graph;
+    VoxCPMCachedGraph residual_lm_step_graph;
+    int base_lm_step_graph_position = -1;
+    int residual_lm_step_graph_position = -1;
 
     VoxCPMDecodeState() = default;
     ~VoxCPMDecodeState() = default;

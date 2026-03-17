@@ -370,6 +370,10 @@ void VoxCPMBackend::tensor_get(const ggml_tensor* tensor, void* data, size_t off
     ggml_backend_tensor_get(tensor, data, offset, size);
 }
 
+void VoxCPMBackend::tensor_copy(ggml_tensor* src, ggml_tensor* dst) {
+    ggml_backend_tensor_copy(src, dst);
+}
+
 // =============================================================================
 // Utilities
 // =============================================================================

@@ -5,9 +5,13 @@
 #include "voxcpm/weight-store.h"
 
 #include <algorithm>
+#include <chrono>
+#include <cctype>
+#include <cstdlib>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 
 namespace voxcpm {
@@ -35,6 +39,19 @@ std::vector<float> slice_column_major_2d(const std::vector<float>& input,
     const size_t offset = static_cast<size_t>(col_idx) * row_dim;
     std::copy_n(input.data() + offset, row_dim, out.data());
     return out;
+}
+
+bool env_flag_enabled(const char* name) {
+    const char* raw = std::getenv(name);
+    if (!raw || raw[0] == '\0') {
+        return false;
+    }
+
+    std::string value(raw);
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
 }  // namespace
@@ -390,13 +407,13 @@ VoxCPMCachedGraph& VoxCPMRuntime::ensure_state_base_lm_step_graph(VoxCPMDecodeSt
     VOXCPM_ASSERT(backend_ != nullptr);
     VOXCPM_ASSERT(state.base_lm_cache != nullptr);
 
-    auto [it, inserted] = state.base_lm_step_graphs.try_emplace(position);
-    VoxCPMCachedGraph& cached = it->second;
-    if (!inserted && cached.graph) {
-        return cached;
+    if (state.base_lm_step_graph.graph && state.base_lm_step_graph_position == position) {
+        return state.base_lm_step_graph;
     }
 
+    VoxCPMCachedGraph& cached = state.base_lm_step_graph;
     cached.clear();
+    state.base_lm_step_graph_position = position;
     cached.context = std::make_unique<VoxCPMContext>(ContextType::Graph, 16384, 131072);
     VoxCPMContext& graph_ctx = *cached.context;
     cached.input0 = graph_ctx.new_tensor_1d(GGML_TYPE_F32, base_lm_.config().hidden_size);
@@ -420,20 +437,19 @@ VoxCPMCachedGraph& VoxCPMRuntime::ensure_state_residual_lm_step_graph(VoxCPMDeco
     VOXCPM_ASSERT(backend_ != nullptr);
     VOXCPM_ASSERT(state.residual_lm_cache != nullptr);
 
-    auto [it, inserted] = state.residual_lm_step_graphs.try_emplace(position);
-    VoxCPMCachedGraph& cached = it->second;
-    if (!inserted && cached.graph) {
-        return cached;
+    if (state.residual_lm_step_graph.graph && state.residual_lm_step_graph_position == position) {
+        return state.residual_lm_step_graph;
     }
 
+    VoxCPMCachedGraph& cached = state.residual_lm_step_graph;
     cached.clear();
+    state.residual_lm_step_graph_position = position;
     cached.context = std::make_unique<VoxCPMContext>(ContextType::Graph, 8192, 65536);
     VoxCPMContext& graph_ctx = *cached.context;
     cached.input0 = graph_ctx.new_tensor_1d(GGML_TYPE_F32, residual_lm_.config().hidden_size);
     cached.input1 = graph_ctx.new_tensor_1d(GGML_TYPE_I32, 1);
     ggml_set_input(cached.input0);
     ggml_set_input(cached.input1);
-
     cached.output = residual_lm_.forward_step(graph_ctx,
                                               cached.input0,
                                               position,
@@ -927,6 +943,10 @@ VoxCPMDecodeResult VoxCPMRuntime::decode(VoxCPMDecodeState state,
     VOXCPM_ASSERT(static_cast<int>(state.prefix_feat_cond.size()) == config_.patch_size * config_.feat_dim);
     VOXCPM_ASSERT(static_cast<int>(z.size()) == config_.feat_dim * config_.patch_size);
 
+    const bool log_decode_timing = env_flag_enabled("VOXCPM_LOG_DECODE_TIMING");
+    using clock = std::chrono::steady_clock;
+    const auto decode_start = clock::now();
+
     VoxCPMDecodeResult result;
     run_decode_front_half(z,
                           state.lm_hidden,
@@ -935,11 +955,16 @@ VoxCPMDecodeResult VoxCPMRuntime::decode(VoxCPMDecodeState state,
                           inference_timesteps,
                           cfg_value,
                           result.output_0);
+    const auto front_half_end = clock::now();
+
     const int new_position = state.current_position + 1;
     const std::vector<float> stop_logits = run_stop_predictor(state.lm_hidden);
     result.output_2 = stop_logits.size() >= 2 && stop_logits[1] > stop_logits[0];
+    const auto stop_end = clock::now();
 
     const std::vector<float> curr_embed = run_locenc_patch_to_lm_embed(result.output_0);
+    const auto patch_end = clock::now();
+
     VoxCPMCachedGraph& base_step = ensure_state_base_lm_step_graph(state, new_position);
     backend_->alloc_graph(base_step.graph, "runtime.base_lm.decode_step.state_cached");
     backend_->tensor_set(base_step.input0, curr_embed.data(), 0, curr_embed.size() * sizeof(float));
@@ -949,6 +974,7 @@ VoxCPMDecodeResult VoxCPMRuntime::decode(VoxCPMDecodeState state,
     maybe_collect_graph(base_step.graph);
     std::vector<float> lm_hidden(static_cast<size_t>(base_lm_.config().hidden_size));
     backend_->tensor_get(base_step.output, lm_hidden.data(), 0, lm_hidden.size() * sizeof(float));
+    const auto base_end = clock::now();
 
     std::vector<float> residual_input(curr_embed.size(), 0.0f);
     for (size_t i = 0; i < residual_input.size(); ++i) {
@@ -963,6 +989,22 @@ VoxCPMDecodeResult VoxCPMRuntime::decode(VoxCPMDecodeState state,
     maybe_collect_graph(residual_step.graph);
     std::vector<float> residual_hidden(static_cast<size_t>(residual_lm_.config().hidden_size));
     backend_->tensor_get(residual_step.output, residual_hidden.data(), 0, residual_hidden.size() * sizeof(float));
+    const auto residual_end = clock::now();
+
+    if (log_decode_timing) {
+        const auto ms = [](clock::time_point begin, clock::time_point end) {
+            return std::chrono::duration<double, std::milli>(end - begin).count();
+        };
+        std::cerr << "[decode_timing]"
+                  << " position=" << new_position
+                  << " front_half_ms=" << ms(decode_start, front_half_end)
+                  << " stop_ms=" << ms(front_half_end, stop_end)
+                  << " patch_embed_ms=" << ms(stop_end, patch_end)
+                  << " base_step_ms=" << ms(patch_end, base_end)
+                  << " residual_step_ms=" << ms(base_end, residual_end)
+                  << " total_ms=" << ms(decode_start, residual_end)
+                  << "\n";
+    }
 
     state.lm_hidden = std::move(lm_hidden);
     state.residual_hidden = std::move(residual_hidden);
@@ -1080,6 +1122,8 @@ VoxCPMDecodeState VoxCPMRuntime::benchmark_clone_state(const VoxCPMDecodeState& 
     copy.current_position = state.current_position;
     copy.prefix_feat_cond = state.prefix_feat_cond;
     copy.streaming_prefix_len = state.streaming_prefix_len;
+    copy.base_lm_step_graph_position = -1;
+    copy.residual_lm_step_graph_position = -1;
     return copy;
 }
 
