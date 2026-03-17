@@ -5,7 +5,7 @@
 实现 LocEnc（Local Encoder）模块的 C++ GGML 版本。LocEnc 是 VoxCPM 的关键组件，负责将音频特征编码为局部表示。
 
 **参考实现**：
-- Python: `/home/orangepi/Codes/ggbond/vendor/VoxCPM/src/voxcpm/modules/locenc/local_encoder.py`
+- Python: `${WORKSPACE_ROOT}/vendor/VoxCPM/src/voxcpm/modules/locenc/local_encoder.py`
 - 复用模块: `MiniCPMModel` ([src/minicpm.cpp](../VoxCPM.cpp/src/minicpm.cpp))
 
 **与 MiniCPM 的关系**：

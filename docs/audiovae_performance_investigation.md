@@ -18,7 +18,7 @@ The short version:
 
 ## What Was Actually Slow
 
-The main bottleneck was in [`src/audio-vae.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/audio-vae.cpp), in the custom depthwise convolution used by residual units.
+The main bottleneck was in [`src/audio-vae.cpp`](${REPO_ROOT}/src/audio-vae.cpp), in the custom depthwise convolution used by residual units.
 
 Before the fix:
 
@@ -35,7 +35,7 @@ Judgment: partially correct, but not the best first fix for this repo.
 
 What is true:
 
-- The F32 `im2col` implementation in [`third_party/ggml/src/ggml-cpu/ops.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/src/ggml-cpu/ops.cpp#L6112) is a straightforward nested-loop implementation.
+- The F32 `im2col` implementation in [`third_party/ggml/src/ggml-cpu/ops.cpp`](${REPO_ROOT}/third_party/ggml/src/ggml-cpu/ops.cpp#L6112) is a straightforward nested-loop implementation.
 - It is a plausible optimization target if we are willing to modify ggml internals.
 
 What is missing:
@@ -54,7 +54,7 @@ Judgment: directionally correct, but secondary.
 
 What is true:
 
-- `snake_activation()` in [`src/audio-vae.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/audio-vae.cpp#L113) creates several graph nodes and repeats broadcasts.
+- `snake_activation()` in [`src/audio-vae.cpp`](${REPO_ROOT}/src/audio-vae.cpp#L113) creates several graph nodes and repeats broadcasts.
 - A fused snake operator could reduce graph size and memory traffic.
 
 What is missing:
@@ -110,8 +110,8 @@ The implemented fix was:
 
 Relevant code:
 
-- depthwise work partitioning in [`src/audio-vae.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/audio-vae.cpp#L27)
-- multi-task scheduling in [`src/audio-vae.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/audio-vae.cpp#L320)
+- depthwise work partitioning in [`src/audio-vae.cpp`](${REPO_ROOT}/src/audio-vae.cpp#L27)
+- multi-task scheduling in [`src/audio-vae.cpp`](${REPO_ROOT}/src/audio-vae.cpp#L320)
 
 The key change is that the work is now partitioned over `channels * batch`, instead of only letting one worker execute the full kernel.
 
@@ -138,12 +138,12 @@ This confirmed that the hot path was no longer effectively single-threaded.
 
 ## About Thread Configuration
 
-During validation, a test-only environment variable `VOXCPM_TEST_THREADS` was added in [`tests/test_audio_vae.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_audio_vae.cpp#L32).
+During validation, a test-only environment variable `VOXCPM_TEST_THREADS` was added in [`tests/test_audio_vae.cpp`](${REPO_ROOT}/tests/test_audio_vae.cpp#L32).
 
 Important clarification:
 
 - This environment variable is only a convenience for test-time thread sweeps.
-- The real ggml thread control still happens through `VoxCPMBackend`, which calls `ggml_backend_cpu_set_n_threads(...)` in [`src/backend.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/backend.cpp#L17).
+- The real ggml thread control still happens through `VoxCPMBackend`, which calls `ggml_backend_cpu_set_n_threads(...)` in [`src/backend.cpp`](${REPO_ROOT}/src/backend.cpp#L17).
 
 So the environment variable is not the actual threading mechanism. It is only a convenient way to choose the `n_threads` value passed into the backend during tests.
 

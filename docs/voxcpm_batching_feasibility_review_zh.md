@@ -2,7 +2,7 @@
 
 ## 1. 结论
 
-对 `/home/orangepi/.claude/plans/unified-sleeping-sparrow.md` 的复核结论如下：
+对 `<LOCAL_PLAN_PATH>/unified-sleeping-sparrow.md` 的复核结论如下：
 
 - 如果目标是“像 llama.cpp 一样的 continuous batching HTTP service”，文档对难度的核心判断基本成立，不算夸大。
 - 如果目标只是“把 VoxCPM.cpp 做成 HTTP 服务”，或者“做固定 batch 的静态批处理”，原文把难度说重了。
@@ -18,15 +18,15 @@
 
 本次判断基于以下真实代码，而不是仅依据计划文档推断：
 
-- [include/voxcpm/voxcpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
-- [include/voxcpm/minicpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h)
-- [src/minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp)
-- [src/localenc.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/localenc.cpp)
-- [src/locdit.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/locdit.cpp)
-- [src/unified_cfm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/unified_cfm.cpp)
-- [tests/test_locdit.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_locdit.cpp)
-- [examples/voxcpm_tts.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp)
+- [include/voxcpm/voxcpm.h](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
+- [include/voxcpm/minicpm.h](${REPO_ROOT}/include/voxcpm/minicpm.h)
+- [src/minicpm.cpp](${REPO_ROOT}/src/minicpm.cpp)
+- [src/localenc.cpp](${REPO_ROOT}/src/localenc.cpp)
+- [src/locdit.cpp](${REPO_ROOT}/src/locdit.cpp)
+- [src/unified_cfm.cpp](${REPO_ROOT}/src/unified_cfm.cpp)
+- [tests/test_locdit.cpp](${REPO_ROOT}/tests/test_locdit.cpp)
+- [examples/voxcpm_tts.cpp](${REPO_ROOT}/examples/voxcpm_tts.cpp)
 
 ---
 
@@ -45,7 +45,7 @@
 
 见：
 
-- [include/voxcpm/voxcpm.h#L23](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h#L23)
+- [include/voxcpm/voxcpm.h#L23](${REPO_ROOT}/include/voxcpm/voxcpm.h#L23)
 
 这说明当前接口语义就是“一次只推进一个序列”，没有 `seq_id`、`slot_id`、请求队列或多会话并存能力。
 
@@ -56,8 +56,8 @@
 
 见：
 
-- [src/voxcpm.cpp#L578](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L578)
-- [src/voxcpm.cpp#L646](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L646)
+- [src/voxcpm.cpp#L578](${REPO_ROOT}/src/voxcpm.cpp#L578)
+- [src/voxcpm.cpp#L646](${REPO_ROOT}/src/voxcpm.cpp#L646)
 
 这和 llama.cpp server 那种“任务队列 + slot 调度 + 单主循环统一推进多个序列”的模型差异很大。
 
@@ -65,11 +65,11 @@
 
 `encode_feature_sequence()` 明确对 `seq_len` 做循环，每次都调用一次 `run_locenc_patch()`：
 
-- [src/voxcpm.cpp#L202](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L202)
+- [src/voxcpm.cpp#L202](${REPO_ROOT}/src/voxcpm.cpp#L202)
 
 而 `run_locenc_patch()` 每次都会新建 graph、分配输入、执行一次计算：
 
-- [src/voxcpm.cpp#L179](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L179)
+- [src/voxcpm.cpp#L179](${REPO_ROOT}/src/voxcpm.cpp#L179)
 
 这说明原文说 “LocEnc 逐 patch 处理，不适合直接拿来做高吞吐 batch” 是成立的。
 
@@ -83,8 +83,8 @@
 
 见：
 
-- [src/locdit.cpp#L212](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/locdit.cpp#L212)
-- [src/locdit.cpp#L244](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/locdit.cpp#L244)
+- [src/locdit.cpp#L212](${REPO_ROOT}/src/locdit.cpp#L212)
+- [src/locdit.cpp#L244](${REPO_ROOT}/src/locdit.cpp#L244)
 
 这意味着它只是“调用层接口能吃 batch tensor”，但内部仍是串行展开，不是统一图内并行。
 
@@ -97,11 +97,11 @@
 
 见：
 
-- [src/minicpm.cpp#L132](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp#L132)
+- [src/minicpm.cpp#L132](${REPO_ROOT}/src/minicpm.cpp#L132)
 
 现有 `get_k_batch/get_v_batch` 的 “batch” 是 token 区间写入，不是多请求序列 batch：
 
-- [src/minicpm.cpp#L192](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp#L192)
+- [src/minicpm.cpp#L192](${REPO_ROOT}/src/minicpm.cpp#L192)
 
 所以文档所说“没有 llama.cpp 式多序列共享 KV 语义”也是准确的。
 
@@ -127,7 +127,7 @@
 
 见：
 
-- [examples/voxcpm_tts.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp)
+- [examples/voxcpm_tts.cpp](${REPO_ROOT}/examples/voxcpm_tts.cpp)
 
 这意味着：
 
@@ -147,9 +147,9 @@
 
 见：
 
-- [src/voxcpm.cpp#L364](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L364)
-- [src/minicpm.cpp#L170](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp#L170)
-- [src/minicpm.cpp#L390](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp#L390)
+- [src/voxcpm.cpp#L364](${REPO_ROOT}/src/voxcpm.cpp#L364)
+- [src/minicpm.cpp#L170](${REPO_ROOT}/src/minicpm.cpp#L170)
+- [src/minicpm.cpp#L390](${REPO_ROOT}/src/minicpm.cpp#L390)
 
 也就是说，底层并不是完全从零开始，问题在于：
 
@@ -162,7 +162,7 @@
 
 测试里已经覆盖 `batch=1` 和 `batch=2` 的构图与执行：
 
-- [tests/test_locdit.cpp#L193](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_locdit.cpp#L193)
+- [tests/test_locdit.cpp#L193](${REPO_ROOT}/tests/test_locdit.cpp#L193)
 
 这说明 `LocDiT` 的外部接口和张量布局至少已经为 batch 留了入口。  
 虽然内部还是串行循环，但这比“完全没有 batch 接口”更接近可演进状态。

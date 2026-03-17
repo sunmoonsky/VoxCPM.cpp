@@ -11,9 +11,9 @@
 
 当前实现已经落地到：
 
-- [include/voxcpm/minicpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h)
-- [src/minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp)
-- [tests/test_minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_minicpm.cpp)
+- [include/voxcpm/minicpm.h](${REPO_ROOT}/include/voxcpm/minicpm.h)
+- [src/minicpm.cpp](${REPO_ROOT}/src/minicpm.cpp)
+- [tests/test_minicpm.cpp](${REPO_ROOT}/tests/test_minicpm.cpp)
 
 文档用途已经从“实现计划”切换为“当前实现说明 + 验证结果 + 未完成项”。
 
@@ -63,7 +63,7 @@
 
 #### `MiniCPMConfig`
 
-定义在 [config.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/config.h)。
+定义在 [config.h](${REPO_ROOT}/include/voxcpm/config.h)。
 
 当前关键字段：
 
@@ -328,7 +328,7 @@ MiniCPM 配置：
 
 测试文件：
 
-- [tests/test_minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_minicpm.cpp)
+- [tests/test_minicpm.cpp](${REPO_ROOT}/tests/test_minicpm.cpp)
 
 ### 8.1 结构测试
 

@@ -5,10 +5,10 @@
 实现 MiniCPM Transformer 模块的 C++ GGML 版本，用于 VoxCPM 的 BaseLM (24层)、ResidualLM (8层)、LocEnc (8层)、LocDiT (8层)。
 
 **参考实现**：
-- Python GGML: `/home/orangepi/Codes/ggbond/examples/minicpm_ggml.py`
-- PyTorch 原版: `/home/orangepi/Codes/ggbond/vendor/VoxCPM/src/voxcpm/modules/minicpm4/model.py`
-- GPT-2 GGML: `/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/examples/gpt-2/main-backend.cpp`
-- llama.cpp KV Cache: `/home/orangepi/Codes/ggbond/vendor/llama.cpp/src/llama-kv-cache.cpp`
+- Python GGML: `${WORKSPACE_ROOT}/examples/minicpm_ggml.py`
+- PyTorch 原版: `${WORKSPACE_ROOT}/vendor/VoxCPM/src/voxcpm/modules/minicpm4/model.py`
+- GPT-2 GGML: `${REPO_ROOT}/third_party/ggml/examples/gpt-2/main-backend.cpp`
+- llama.cpp KV Cache: `${WORKSPACE_ROOT}/vendor/llama.cpp/src/llama-kv-cache.cpp`
 
 **复用模块**：FSQ (`src/fsq.cpp`), AudioVAE (`src/audio-vae.cpp`) 的实现模式。
 
@@ -733,7 +733,7 @@ while (generating) {
 ## 八、验证方法
 
 ```bash
-cd /home/orangepi/Codes/ggbond/VoxCPM.cpp
+cd ${REPO_ROOT}
 cmake -B build && cmake --build build
 cd build && ctest -R test_minicpm --output-on-failure
 ```

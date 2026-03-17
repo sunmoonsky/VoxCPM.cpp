@@ -23,8 +23,8 @@
 
 涉及文件：
 
-- [include/voxcpm/minicpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h)
-- [src/minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp)
+- [include/voxcpm/minicpm.h](${REPO_ROOT}/include/voxcpm/minicpm.h)
+- [src/minicpm.cpp](${REPO_ROOT}/src/minicpm.cpp)
 
 改动内容：
 
@@ -40,9 +40,9 @@
 
 涉及文件：
 
-- [include/voxcpm/locdit.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/locdit.h)
-- [src/locdit.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/locdit.cpp)
-- [src/unified_cfm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/unified_cfm.cpp)
+- [include/voxcpm/locdit.h](${REPO_ROOT}/include/voxcpm/locdit.h)
+- [src/locdit.cpp](${REPO_ROOT}/src/locdit.cpp)
+- [src/unified_cfm.cpp](${REPO_ROOT}/src/unified_cfm.cpp)
 
 改动内容：
 
@@ -62,8 +62,8 @@
 
 涉及文件：
 
-- [include/voxcpm/voxcpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
+- [include/voxcpm/voxcpm.h](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
 
 改动内容：
 
@@ -82,8 +82,8 @@
 
 涉及文件：
 
-- [include/voxcpm/voxcpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
+- [include/voxcpm/voxcpm.h](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
 
 改动内容：
 
@@ -101,11 +101,11 @@
 
 涉及文件：
 
-- [include/voxcpm/localenc.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/localenc.h)
-- [src/localenc.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/localenc.cpp)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
-- [include/voxcpm/minicpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h)
-- [src/minicpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp)
+- [include/voxcpm/localenc.h](${REPO_ROOT}/include/voxcpm/localenc.h)
+- [src/localenc.cpp](${REPO_ROOT}/src/localenc.cpp)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
+- [include/voxcpm/minicpm.h](${REPO_ROOT}/include/voxcpm/minicpm.h)
+- [src/minicpm.cpp](${REPO_ROOT}/src/minicpm.cpp)
 
 改动内容：
 
@@ -130,8 +130,8 @@
 
 涉及文件：
 
-- [include/voxcpm/voxcpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
+- [include/voxcpm/voxcpm.h](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
 
 改动内容：
 
@@ -153,8 +153,8 @@
 
 涉及文件：
 
-- [include/voxcpm/voxcpm.h](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [src/voxcpm.cpp](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
+- [include/voxcpm/voxcpm.h](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [src/voxcpm.cpp](${REPO_ROOT}/src/voxcpm.cpp)
 
 改动内容：
 
@@ -339,7 +339,7 @@
 benchmark：
 
 - 来自：
-  - [benchmark/results/voxcpm_benchmark_20260316_205121.json](/home/orangepi/Codes/ggbond/VoxCPM.cpp/benchmark/results/voxcpm_benchmark_20260316_205121.json)
+  - [benchmark/results/voxcpm_benchmark_20260316_205121.json](${REPO_ROOT}/benchmark/results/voxcpm_benchmark_20260316_205121.json)
 - `decode.base_lm_step_fsq.early`：`65.297 ms`
 - `decode.residual_lm_step.early`：`66.858 ms`
 - `voxcpm.decode_step.early`：`649.859 ms`
@@ -374,8 +374,8 @@ benchmark：
 benchmark：
 
 - 来自：
-  - [benchmark/results/voxcpm_benchmark_20260316_204236.json](/home/orangepi/Codes/ggbond/VoxCPM.cpp/benchmark/results/voxcpm_benchmark_20260316_204236.json)
-  - [benchmark/results/voxcpm_benchmark_20260316_204508.json](/home/orangepi/Codes/ggbond/VoxCPM.cpp/benchmark/results/voxcpm_benchmark_20260316_204508.json)
+  - [benchmark/results/voxcpm_benchmark_20260316_204236.json](${REPO_ROOT}/benchmark/results/voxcpm_benchmark_20260316_204236.json)
+  - [benchmark/results/voxcpm_benchmark_20260316_204508.json](${REPO_ROOT}/benchmark/results/voxcpm_benchmark_20260316_204508.json)
 - `decode.base_lm_step_fsq.early`：约 `60 ms`
 - `decode.residual_lm_step.early`：约 `67 ~ 69 ms`
 - `voxcpm.decode_step.early`：约 `652 ~ 657 ms`

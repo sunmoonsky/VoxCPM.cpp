@@ -29,7 +29,7 @@
 
 参考文档：
 
-- `/home/orangepi/.claude/plans/polished-jumping-firefly.md`
+- `<LOCAL_PLAN_PATH>/polished-jumping-firefly.md`
 
 该计划的大方向是正确的，但在实际执行前发现有几处需要修正：
 
@@ -44,7 +44,7 @@
 
 ### 2. `json` 的 FetchContent 回退其实已存在
 
-执行前检查 [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt) 发现：
+执行前检查 [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt) 发现：
 
 - 当前工程优先使用 `third_party/json`
 - 若该目录不存在，则已经自动回退到 `FetchContent`
@@ -105,8 +105,8 @@
 
 实际修改了以下文件：
 
-- [.gitignore](/home/orangepi/Codes/ggbond/VoxCPM.cpp/.gitignore)
-- [README.md](/home/orangepi/Codes/ggbond/VoxCPM.cpp/README.md)
+- [.gitignore](${REPO_ROOT}/.gitignore)
+- [README.md](${REPO_ROOT}/README.md)
 
 其中 `.gitignore` 的策略是：
 
@@ -268,7 +268,7 @@ e130a7b chore: bootstrap standalone VoxCPM.cpp repository
 建议按下面顺序继续整理：
 
 1. 补充许可证文件，并确认是否继续使用 GPL v3
-2. 完善 [README.md](/home/orangepi/Codes/ggbond/VoxCPM.cpp/README.md)
+2. 完善 [README.md](${REPO_ROOT}/README.md)
 3. 运行一次完整构建和测试，确认拆分后无路径问题
 4. 决定是否删除本地参考目录：
    - `third_party/json`
@@ -280,9 +280,9 @@ e130a7b chore: bootstrap standalone VoxCPM.cpp repository
 
 ## 相关文件
 
-- [README.md](/home/orangepi/Codes/ggbond/VoxCPM.cpp/README.md)
-- [.gitignore](/home/orangepi/Codes/ggbond/VoxCPM.cpp/.gitignore)
-- [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt)
-- [docs/ggml_subtree_maintenance_strategy.md](/home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/ggml_subtree_maintenance_strategy.md)
-- [docs/audio_vae_ggml_operator_investigation_zh.md](/home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/audio_vae_ggml_operator_investigation_zh.md)
+- [README.md](${REPO_ROOT}/README.md)
+- [.gitignore](${REPO_ROOT}/.gitignore)
+- [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt)
+- [docs/ggml_subtree_maintenance_strategy.md](${REPO_ROOT}/docs/ggml_subtree_maintenance_strategy.md)
+- [docs/audio_vae_ggml_operator_investigation_zh.md](${REPO_ROOT}/docs/audio_vae_ggml_operator_investigation_zh.md)
 

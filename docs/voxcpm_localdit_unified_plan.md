@@ -670,7 +670,7 @@ LocDiT 的 Transformer 部分直接复用 `MiniCPMModel`:
 ## 十、验证方法
 
 ```bash
-cd /home/orangepi/Codes/ggbond/VoxCPM.cpp
+cd ${REPO_ROOT}
 cmake -B build && cmake --build build
 cd build && ctest -R "test_locdit|test_unified_cfm" --output-on-failure
 ```

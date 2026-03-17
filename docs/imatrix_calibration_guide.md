@@ -89,10 +89,10 @@ For a multi-speaker product, generate one shared baseline `imatrix` with no prom
 Collect from plain text:
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build/examples/voxcpm_imatrix \
-  --text-file /home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/imatrix_calibration_template_zh.txt \
+${REPO_ROOT}/build/examples/voxcpm_imatrix \
+  --text-file ${REPO_ROOT}/docs/imatrix_calibration_template_zh.txt \
   --output /tmp/voxcpm.zh.imatrix.gguf \
-  --model-path /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf \
+  --model-path ${REPO_ROOT}/models/voxcpm1.5.gguf \
   --threads 8 \
   --max-samples 300 \
   --max-decode-steps 24 \
@@ -103,10 +103,10 @@ Collect from plain text:
 Collect from dataset TSV with per-sample prompts:
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build/examples/voxcpm_imatrix \
-  --dataset-file /home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/imatrix_calibration_dataset_zh.tsv \
+${REPO_ROOT}/build/examples/voxcpm_imatrix \
+  --dataset-file ${REPO_ROOT}/docs/imatrix_calibration_dataset_zh.tsv \
   --output /tmp/voxcpm.zh.dataset.imatrix.gguf \
-  --model-path /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf \
+  --model-path ${REPO_ROOT}/models/voxcpm1.5.gguf \
   --threads 8 \
   --max-samples 300 \
   --save-frequency 50 \
@@ -116,7 +116,7 @@ Collect from dataset TSV with per-sample prompts:
 Inspect an existing file:
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build/examples/voxcpm_imatrix \
+${REPO_ROOT}/build/examples/voxcpm_imatrix \
   --show-statistics \
   --in-file /tmp/voxcpm.zh.imatrix.gguf
 ```
@@ -124,10 +124,10 @@ Inspect an existing file:
 Collect with voice-cloning prompt:
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build/examples/voxcpm_imatrix \
-  --text-file /home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/imatrix_calibration_template_zh.txt \
+${REPO_ROOT}/build/examples/voxcpm_imatrix \
+  --text-file ${REPO_ROOT}/docs/imatrix_calibration_template_zh.txt \
   --output /tmp/voxcpm.zh.prompted.imatrix.gguf \
-  --model-path /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf \
+  --model-path ${REPO_ROOT}/models/voxcpm1.5.gguf \
   --prompt-audio /path/to/prompt.wav \
   --prompt-text "与提示音频完全一致的文本" \
   --threads 8 \

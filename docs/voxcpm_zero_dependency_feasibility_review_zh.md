@@ -15,7 +15,7 @@
 本评审同时核查了以下两部分：
 
 - 当前仓库实际构建行为
-- 文档 `/home/orangepi/.claude/plans/adaptive-gathering-map.md` 的正确性
+- 文档 `<LOCAL_PLAN_PATH>/adaptive-gathering-map.md` 的正确性
 
 ## 当前工程的真实状态
 
@@ -23,7 +23,7 @@
 
 顶层 CMake 明确把 `voxcpm` 定义成静态库：
 
-- [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt#L52)
+- [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt#L52)
 
 也就是说，项目核心库本身不是 `.so/.dylib/.dll`，而是 `libvoxcpm.a`。
 
@@ -31,8 +31,8 @@
 
 `ggml` 子项目在非 MinGW 平台默认 `BUILD_SHARED_LIBS=ON`：
 
-- [third_party/ggml/CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/CMakeLists.txt#L68)
-- [third_party/ggml/CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/CMakeLists.txt#L82)
+- [third_party/ggml/CMakeLists.txt](${REPO_ROOT}/third_party/ggml/CMakeLists.txt#L68)
+- [third_party/ggml/CMakeLists.txt](${REPO_ROOT}/third_party/ggml/CMakeLists.txt#L82)
 
 所以默认构建时，`voxcpm_tts` 会链接到：
 
@@ -53,7 +53,7 @@
 
 对应代码在：
 
-- [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt#L37)
+- [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt#L37)
 
 所以文档里把 `json` 说成“已 vendored”在当前工作区下基本成立，但严格说法应该是：
 
@@ -145,7 +145,7 @@ cmake -S . -B build-static-review \
 
 原文：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L55)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L55)
 
 问题在于它忽略了：
 
@@ -161,15 +161,15 @@ cmake -S . -B build-static-review \
 
 原文把 `libdl` 解释成“仅 backend plugins 需要”：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L60)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L60)
 
 但当前 `ggml` 在 Linux 上会直接给 `ggml` 目标链接 `dl`：
 
-- [third_party/ggml/src/CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/src/CMakeLists.txt#L243)
+- [third_party/ggml/src/CMakeLists.txt](${REPO_ROOT}/third_party/ggml/src/CMakeLists.txt#L243)
 
 而且 `ggml` 本体源文件里包含了 `ggml-backend-dl.cpp`：
 
-- [third_party/ggml/src/CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/src/CMakeLists.txt#L224)
+- [third_party/ggml/src/CMakeLists.txt](${REPO_ROOT}/third_party/ggml/src/CMakeLists.txt#L224)
 
 所以“CPU-only 就天然不需要 `dl`”在当前代码下并不成立。
 
@@ -177,11 +177,11 @@ cmake -S . -B build-static-review \
 
 原文依赖表中没有提到 `libgomp`：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L22)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L22)
 
 但 `ggml` 默认 `GGML_OPENMP=ON`，并会在 CPU backend 中链接 OpenMP：
 
-- [third_party/ggml/CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/third_party/ggml/CMakeLists.txt#L240)
+- [third_party/ggml/CMakeLists.txt](${REPO_ROOT}/third_party/ggml/CMakeLists.txt#L240)
 
 这会让默认构建额外依赖 `libgomp.so.1`。
 
@@ -189,7 +189,7 @@ cmake -S . -B build-static-review \
 
 原文建议：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L156)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L156)
 
 这有几个问题：
 
@@ -204,7 +204,7 @@ cmake -S . -B build-static-review \
 
 原文：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L120)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L120)
 
 这在“目标状态”里可以作为改造目标，但不能写成“当前现状”。当前 `ggml` 的 registry / backend-dl 路径仍然在参与构建和链接。
 
@@ -212,7 +212,7 @@ cmake -S . -B build-static-review \
 
 原文：
 
-- [adaptive-gathering-map.md](/home/orangepi/.claude/plans/adaptive-gathering-map.md#L112)
+- [adaptive-gathering-map.md](<LOCAL_PLAN_PATH>/adaptive-gathering-map.md#L112)
 
 更准确的版本应该是：
 
@@ -246,8 +246,8 @@ cmake -S . -B build-static-review \
 
 相关位置：
 
-- [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt#L78)
-- [CMakeLists.txt](/home/orangepi/Codes/ggbond/VoxCPM.cpp/CMakeLists.txt#L111)
+- [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt#L78)
+- [CMakeLists.txt](${REPO_ROOT}/CMakeLists.txt#L111)
 
 所以当前它更像“项目内部静态库”，而不是“对外完整封装好的发布库”。
 
@@ -316,7 +316,7 @@ cmake -S . -B build-static-review \
 - 作为单文件可执行程序：可以做到，Linux 上已经验证存在可行路径。
 - 作为完整对外封装库：当前还不够，需要补打包和依赖收口。
 
-对 `/home/orangepi/.claude/plans/adaptive-gathering-map.md` 这份文档的评价则是：
+对 `<LOCAL_PLAN_PATH>/adaptive-gathering-map.md` 这份文档的评价则是：
 
 - 方向正确
 - 适合作为“初步方案草稿”

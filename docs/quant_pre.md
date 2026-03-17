@@ -4,7 +4,7 @@
 
 ### 模型文件信息
 
-- **文件路径**：`/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.dump`
+- **文件路径**：`${REPO_ROOT}/models/voxcpm1.5.dump`
 - **文件格式**：GGUF
 - **张量数量**：690 个
 - **当前类型**：全部为 `GGML_TYPE_F32` (32-bit 浮点)
@@ -596,15 +596,15 @@ const std::vector<std::string> to_skip = {
 
 ```bash
 # 1. 进入 llama.cpp 目录
-cd /home/orangepi/Codes/ggbond/vendor/llama.cpp
+cd ${WORKSPACE_ROOT}/vendor/llama.cpp
 
 # 2. 构建项目
 cmake -B build && cmake --build build
 
 # 3. 量化模型
 ./build/bin/llama-quantize \
-    /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.dump \
-    /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5-Q4_K.gguf \
+    ${REPO_ROOT}/models/voxcpm1.5.dump \
+    ${REPO_ROOT}/models/voxcpm1.5-Q4_K.gguf \
     Q4_K
 ```
 
@@ -960,12 +960,12 @@ ggml_type ggml_type_from_ftype(ggml_ftype ftype) {
 
 ```bash
 # 使用 llama.cpp 工具直接量化
-cd /home/orangepi/Codes/ggbond/vendor/llama.cpp
+cd ${WORKSPACE_ROOT}/vendor/llama.cpp
 cmake -B build && cmake --build build
 
 ./build/bin/llama-quantize \
-    /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.dump \
-    /home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5-Q4_K.gguf \
+    ${REPO_ROOT}/models/voxcpm1.5.dump \
+    ${REPO_ROOT}/models/voxcpm1.5-Q4_K.gguf \
     Q4_K
 ```
 

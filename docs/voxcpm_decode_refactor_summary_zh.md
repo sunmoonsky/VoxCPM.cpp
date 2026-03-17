@@ -14,29 +14,29 @@
 
 ## 涉及文件
 
-- [`examples/voxcpm_tts.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp)
-- [`include/voxcpm/voxcpm.h`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h)
-- [`src/voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp)
-- [`include/voxcpm/minicpm.h`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h)
-- [`src/minicpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp)
-- [`src/quantize.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/quantize.cpp)
-- [`tests/test_voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_voxcpm.cpp)
+- [`examples/voxcpm_tts.cpp`](${REPO_ROOT}/examples/voxcpm_tts.cpp)
+- [`include/voxcpm/voxcpm.h`](${REPO_ROOT}/include/voxcpm/voxcpm.h)
+- [`src/voxcpm.cpp`](${REPO_ROOT}/src/voxcpm.cpp)
+- [`include/voxcpm/minicpm.h`](${REPO_ROOT}/include/voxcpm/minicpm.h)
+- [`src/minicpm.cpp`](${REPO_ROOT}/src/minicpm.cpp)
+- [`src/quantize.cpp`](${REPO_ROOT}/src/quantize.cpp)
+- [`tests/test_voxcpm.cpp`](${REPO_ROOT}/tests/test_voxcpm.cpp)
 
 ## 主要改动
 
 ### 1. `voxcpm_tts` 的 host 侧内存复用
 
-[`voxcpm_tts.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp#L478) 里的 `generate_noise()` 被改成了 `fill_noise()`：
+[`voxcpm_tts.cpp`](${REPO_ROOT}/examples/voxcpm_tts.cpp#L478) 里的 `generate_noise()` 被改成了 `fill_noise()`：
 
 - 以前：每步 decode 返回一个新的 `std::vector<float>`
 - 现在：复用已有 `noise` buffer，原地填充
 
-[`patch_major_to_latent()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp#L516) 也增加了输出参数版本：
+[`patch_major_to_latent()`](${REPO_ROOT}/examples/voxcpm_tts.cpp#L516) 也增加了输出参数版本：
 
 - 以前：每次都新建 latent vector
 - 现在：可复用已有输出 buffer
 
-另外新增了 [`append_stream_frame()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/examples/voxcpm_tts.cpp#L544)：
+另外新增了 [`append_stream_frame()`](${REPO_ROOT}/examples/voxcpm_tts.cpp#L544)：
 
 - streaming 路径不再每步重建完整 recent frames 序列
 - 改成维护一个最近窗口的小缓存
@@ -49,18 +49,18 @@
 
 ### 2. `VoxCPMRuntime::decode()` 被整理成更少的阶段
 
-当前 `decode()` 主路径在 [`src/voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L659)。
+当前 `decode()` 主路径在 [`src/voxcpm.cpp`](${REPO_ROOT}/src/voxcpm.cpp#L659)。
 
 这一轮没有做“全图融合”，而是做了一个更保守的阶段化整理：
 
-- [`run_decode_front_half()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L467)
+- [`run_decode_front_half()`](${REPO_ROOT}/src/voxcpm.cpp#L467)
   - 负责 `lm_to_dit_proj + res_to_dit_proj + UnifiedCFM`
-- [`run_locenc_patch_to_lm_embed()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L519)
+- [`run_locenc_patch_to_lm_embed()`](${REPO_ROOT}/src/voxcpm.cpp#L519)
   - 负责 `LocEnc + enc_to_lm_proj`
-- [`run_base_lm_decode_step()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L545)
+- [`run_base_lm_decode_step()`](${REPO_ROOT}/src/voxcpm.cpp#L545)
   - 负责 `base_lm forward_step + FSQ`
 
-对应的接口声明在 [`include/voxcpm/voxcpm.h`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/voxcpm.h#L121)。
+对应的接口声明在 [`include/voxcpm/voxcpm.h`](${REPO_ROOT}/include/voxcpm/voxcpm.h#L121)。
 
 这样做的收益是：
 
@@ -70,7 +70,7 @@
 
 ### 3. 给热路径 helper 补上 `reserve_compute_memory()`
 
-在 [`src/voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L191) 到 [`src/voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/voxcpm.cpp#L565) 这一批 helper 图执行代码里，统一补上了：
+在 [`src/voxcpm.cpp`](${REPO_ROOT}/src/voxcpm.cpp#L191) 到 [`src/voxcpm.cpp`](${REPO_ROOT}/src/voxcpm.cpp#L565) 这一批 helper 图执行代码里，统一补上了：
 
 ```cpp
 backend_->reserve_compute_memory(graph);
@@ -84,7 +84,7 @@ backend_->reserve_compute_memory(graph);
 
 ### 4. Stop 头量化策略改成保留
 
-[`src/quantize.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/quantize.cpp#L169) 中新增了：
+[`src/quantize.cpp`](${REPO_ROOT}/src/quantize.cpp#L169) 中新增了：
 
 ```cpp
 if (has_prefix(name, "stop.")) {
@@ -104,12 +104,12 @@ if (has_prefix(name, "stop.")) {
 
 ### 5. `MiniCPMModel` 的配套接口和依赖整理
 
-[`include/voxcpm/minicpm.h`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/include/voxcpm/minicpm.h#L112) 增加了一个更方便的 `forward_step()` 重载：
+[`include/voxcpm/minicpm.h`](${REPO_ROOT}/include/voxcpm/minicpm.h#L112) 增加了一个更方便的 `forward_step()` 重载：
 
 - 允许只传 `position + kv_cache`
 - 不必总是显式传 `positions tensor`
 
-[`src/minicpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/src/minicpm.cpp#L507) 里还把：
+[`src/minicpm.cpp`](${REPO_ROOT}/src/minicpm.cpp#L507) 里还把：
 
 ```cpp
 ggml_tensor* kv_sync = ggml_add(ctx, ggml_sum(ctx, k_write), ggml_sum(ctx, v_write));
@@ -124,14 +124,14 @@ ggml_tensor* kv_sync = ggml_add(ctx, ggml_sum(ctx, k_write), ggml_sum(ctx, v_wri
 
 ### 6. 测试从单步 trace 扩展到多步稳定性
 
-[`tests/test_voxcpm.cpp`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_voxcpm.cpp#L1182) 新增了：
+[`tests/test_voxcpm.cpp`](${REPO_ROOT}/tests/test_voxcpm.cpp#L1182) 新增了：
 
 - `VoxCPM multi-step decode remains stable`
 
 同时加了两个辅助函数：
 
-- [`all_finite()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_voxcpm.cpp#L149)
-- [`make_deterministic_noise()`](/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/test_voxcpm.cpp#L155)
+- [`all_finite()`](${REPO_ROOT}/tests/test_voxcpm.cpp#L149)
+- [`make_deterministic_noise()`](${REPO_ROOT}/tests/test_voxcpm.cpp#L155)
 
 这个测试的重点不是对齐某一步 trace，而是补上此前缺失的检查：
 

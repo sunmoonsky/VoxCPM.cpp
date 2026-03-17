@@ -177,7 +177,7 @@ shared-load 的原则是：
 命令：
 
 ```bash
-ctest --test-dir /home/orangepi/Codes/ggbond/VoxCPM.cpp/build --output-on-failure -j1
+ctest --test-dir ${REPO_ROOT}/build --output-on-failure -j1
 ```
 
 结果：

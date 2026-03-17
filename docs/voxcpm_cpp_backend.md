@@ -83,7 +83,7 @@ Vulkan 构建和运行前，必须同时满足：
 ### CPU 构建
 
 ```bash
-cd /home/orangepi/Codes/ggbond/VoxCPM.cpp
+cd ${REPO_ROOT}
 cmake -B build -DVOXCPM_NATIVE=ON
 cmake --build build
 ```
@@ -93,7 +93,7 @@ cmake --build build
 使用单独目录，避免覆盖当前可工作的 CPU `build/`：
 
 ```bash
-cd /home/orangepi/Codes/ggbond/VoxCPM.cpp
+cd ${REPO_ROOT}
 cmake -B build-vulkan -DVOXCPM_VULKAN=ON -DVOXCPM_NATIVE=ON
 cmake --build build-vulkan
 ```
@@ -109,12 +109,12 @@ cmake --build build-vulkan
 ### CPU
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build/examples/voxcpm_tts \
+${REPO_ROOT}/build/examples/voxcpm_tts \
     --backend cpu \
     --text "测试一下，这是一个流式音频" \
-    --prompt-audio /home/orangepi/Codes/ggbond/examples/dabin.wav \
+    --prompt-audio examples/dabin.wav \
     --prompt-text "可哪怕位于堂堂超一品官职,在十 二郡一言九鼎的大柱国口干舌燥了,这少年还是没什么反应" \
-    --output /home/orangepi/Codes/ggbond/voxcpm_stream_single_final.wav \
+    --output ./voxcpm_stream_single_final.wav \
     --model-path /tmp/voxcpm1.5-iq3xxs.gguf \
     --threads 8 \
     --inference-timesteps 10 \
@@ -124,12 +124,12 @@ cmake --build build-vulkan
 ### Vulkan
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build-vulkan/examples/voxcpm_tts \
+${REPO_ROOT}/build-vulkan/examples/voxcpm_tts \
     --backend vulkan \
     --text "测试一下，这是一个流式音频" \
-    --prompt-audio /home/orangepi/Codes/ggbond/examples/dabin.wav \
+    --prompt-audio examples/dabin.wav \
     --prompt-text "可哪怕位于堂堂超一品官职,在十 二郡一言九鼎的大柱国口干舌燥了,这少年还是没什么反应" \
-    --output /home/orangepi/Codes/ggbond/voxcpm_stream_single_final.wav \
+    --output ./voxcpm_stream_single_final.wav \
     --model-path /tmp/voxcpm1.5-iq3xxs.gguf \
     --threads 8 \
     --inference-timesteps 10 \
@@ -139,12 +139,12 @@ cmake --build build-vulkan
 ### Auto
 
 ```bash
-/home/orangepi/Codes/ggbond/VoxCPM.cpp/build-vulkan/examples/voxcpm_tts \
+${REPO_ROOT}/build-vulkan/examples/voxcpm_tts \
     --backend auto \
     --text "测试一下，这是一个流式音频" \
-    --prompt-audio /home/orangepi/Codes/ggbond/examples/dabin.wav \
+    --prompt-audio examples/dabin.wav \
     --prompt-text "可哪怕位于堂堂超一品官职,在十 二郡一言九鼎的大柱国口干舌燥了,这少年还是没什么反应" \
-    --output /home/orangepi/Codes/ggbond/voxcpm_stream_single_final.wav \
+    --output ./voxcpm_stream_single_final.wav \
     --model-path /tmp/voxcpm1.5-iq3xxs.gguf \
     --threads 8 \
     --inference-timesteps 10 \
@@ -175,7 +175,7 @@ cmake --build build-vulkan
 ggml 自带 Vulkan runtime disable 开关：
 
 ```bash
-GGML_DISABLE_VULKAN=1 /home/orangepi/Codes/ggbond/VoxCPM.cpp/build-vulkan/examples/voxcpm_tts --backend auto ...
+GGML_DISABLE_VULKAN=1 ${REPO_ROOT}/build-vulkan/examples/voxcpm_tts --backend auto ...
 ```
 
 这个场景下应该稳定回退到 CPU。

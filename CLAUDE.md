@@ -204,5 +204,5 @@ Metal 需要使用 `ggml_mul_mat_pad`：
 
 参考文档:
 
-1. 最佳实践：/home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/GGML_BEST_PRACTICES.md
-2. VoxCPM.cpp 架构设计：/home/orangepi/Codes/ggbond/VoxCPM.cpp/docs/logical-hatching-zebra.md
+1. 最佳实践：${REPO_ROOT}/docs/GGML_BEST_PRACTICES.md
+2. VoxCPM.cpp 架构设计：${REPO_ROOT}/docs/logical-hatching-zebra.md
