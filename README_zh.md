@@ -26,6 +26,8 @@ cd build
 ctest --output-on-failure
 ```
 
+测试模型/trace 路径配置和开源协作说明请见 [docs/TEST_SETUP.md](docs/TEST_SETUP.md)。
+
 ## ggml 维护
 
 项目保持当前 `ggml` 导入和补丁流程的本地溯源：

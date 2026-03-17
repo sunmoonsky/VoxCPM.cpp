@@ -9,6 +9,7 @@
 #include "voxcpm/backend.h"
 #include "voxcpm/context.h"
 #include "voxcpm/minicpm.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <array>
@@ -30,8 +31,7 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kTraceDir = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/";
+const std::string kModelPath = get_model_path();
 constexpr float kTraceTolerance = 0.05f;
 constexpr float kMaxMismatchRate = 0.05f;
 
@@ -563,7 +563,7 @@ void validate_with_tolerance(const std::vector<float>& actual,
 void run_forward_trace_validation(const std::string& model_prefix,
                                   const std::string& trace_name,
                                   const std::string& label) {
-    const std::string trace_path = std::string(kTraceDir) + trace_name;
+    const std::string trace_path = get_trace_path(trace_name);
     if (!file_exists(kModelPath)) {
         WARN("Model file not found, skipping test: " << kModelPath);
         return;
@@ -663,8 +663,8 @@ void run_forward_step_trace_validation(const std::string& model_prefix,
                                        const std::string& trace_name,
                                        const std::string& meta_name,
                                        const std::string& label) {
-    const std::string trace_path = std::string(kTraceDir) + trace_name;
-    const std::string meta_path = std::string(kTraceDir) + meta_name;
+    const std::string trace_path = get_trace_path(trace_name);
+    const std::string meta_path = get_trace_path(meta_name);
 
     if (!file_exists(kModelPath)) {
         WARN("Model file not found, skipping test: " << kModelPath);
@@ -809,7 +809,7 @@ TEST_CASE("MiniCPMKVCache init and views", "[minicpm][kv]") {
 }
 
 TEST_CASE("MiniCPM model loads BaseLM weights from GGUF", "[minicpm][integration]") {
-    const char* model_path = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
+    const std::string model_path = get_model_path();
     std::ifstream file(model_path, std::ios::binary);
     if (!file.is_open()) {
         WARN("Model file not found, skipping test: " << model_path);
@@ -835,7 +835,7 @@ TEST_CASE("MiniCPM model loads BaseLM weights from GGUF", "[minicpm][integration
 }
 
 TEST_CASE("MiniCPM model loads variant-specific config from GGUF", "[minicpm][integration]") {
-    const char* model_path = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
+    const std::string model_path = get_model_path();
     std::ifstream file(model_path, std::ios::binary);
     if (!file.is_open()) {
         WARN("Model file not found, skipping test: " << model_path);
@@ -876,7 +876,7 @@ TEST_CASE("MiniCPM model loads variant-specific config from GGUF", "[minicpm][in
 }
 
 TEST_CASE("MiniCPM forward graph builds", "[minicpm][integration]") {
-    const char* model_path = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
+    const std::string model_path = get_model_path();
     std::ifstream file(model_path, std::ios::binary);
     if (!file.is_open()) {
         WARN("Model file not found, skipping test: " << model_path);
@@ -915,7 +915,7 @@ TEST_CASE("MiniCPM forward graph builds", "[minicpm][integration]") {
 }
 
 TEST_CASE("MiniCPM decode graph builds", "[minicpm][integration]") {
-    const char* model_path = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
+    const std::string model_path = get_model_path();
     std::ifstream file(model_path, std::ios::binary);
     if (!file.is_open()) {
         WARN("Model file not found, skipping test: " << model_path);

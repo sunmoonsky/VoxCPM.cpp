@@ -10,6 +10,7 @@
 #include "voxcpm/context.h"
 #include "voxcpm/locdit.h"
 #include "voxcpm/unified_cfm.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <cmath>
@@ -28,8 +29,8 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kTracePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_UnifiedCFM.jsonl";
+const std::string kModelPath = get_model_path();
+const std::string kTracePath = get_trace_path("trace_UnifiedCFM.jsonl");
 constexpr float kTraceTolerance = 0.12f;
 constexpr float kMaxMismatchRate = 0.10f;
 

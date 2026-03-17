@@ -8,6 +8,7 @@
 #include "voxcpm/backend.h"
 #include "voxcpm/components.h"
 #include "voxcpm/context.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <cmath>
@@ -25,8 +26,7 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kTraceDir = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/";
+const std::string kModelPath = get_model_path();
 constexpr float kProjectionTolerance = 0.02f;
 constexpr float kProjectionMaxMismatchRate = 0.05f;
 constexpr float kStopTolerance = 0.02f;
@@ -234,7 +234,7 @@ TEST_CASE("VoxCPMComponents loads all submodules", "[components][container][inte
 }
 
 TEST_CASE("LinearProjection enc_to_lm matches trace", "[components][projection][trace]") {
-    const std::string trace_path = std::string(kTraceDir) + "trace_proj_enc_to_lm.jsonl";
+    const std::string trace_path = get_trace_path("trace_proj_enc_to_lm.jsonl");
     if (!file_exists(kModelPath) || !file_exists(trace_path)) {
         WARN("enc_to_lm trace dependencies missing, skipping test");
         return;
@@ -276,7 +276,7 @@ TEST_CASE("LinearProjection enc_to_lm matches trace", "[components][projection][
 }
 
 TEST_CASE("LinearProjection lm_to_dit matches trace", "[components][projection][trace]") {
-    const std::string trace_path = std::string(kTraceDir) + "trace_proj_lm_to_dit.jsonl";
+    const std::string trace_path = get_trace_path("trace_proj_lm_to_dit.jsonl");
     if (!file_exists(kModelPath) || !file_exists(trace_path)) {
         WARN("lm_to_dit trace dependencies missing, skipping test");
         return;
@@ -318,7 +318,7 @@ TEST_CASE("LinearProjection lm_to_dit matches trace", "[components][projection][
 }
 
 TEST_CASE("LinearProjection res_to_dit matches trace", "[components][projection][trace]") {
-    const std::string trace_path = std::string(kTraceDir) + "trace_proj_res_to_dit.jsonl";
+    const std::string trace_path = get_trace_path("trace_proj_res_to_dit.jsonl");
     if (!file_exists(kModelPath) || !file_exists(trace_path)) {
         WARN("res_to_dit trace dependencies missing, skipping test");
         return;
@@ -360,8 +360,8 @@ TEST_CASE("LinearProjection res_to_dit matches trace", "[components][projection]
 }
 
 TEST_CASE("StopTokenPredictor matches trace", "[components][stop_token][trace]") {
-    const std::string proj_trace_path = std::string(kTraceDir) + "trace_proj_stop_proj.jsonl";
-    const std::string head_trace_path = std::string(kTraceDir) + "trace_proj_stop_head.jsonl";
+    const std::string proj_trace_path = get_trace_path("trace_proj_stop_proj.jsonl");
+    const std::string head_trace_path = get_trace_path("trace_proj_stop_head.jsonl");
     if (!file_exists(kModelPath) || !file_exists(proj_trace_path) || !file_exists(head_trace_path)) {
         WARN("stop token trace dependencies missing, skipping test");
         return;
@@ -405,7 +405,7 @@ TEST_CASE("StopTokenPredictor matches trace", "[components][stop_token][trace]")
 }
 
 TEST_CASE("Embedding matches trace", "[components][embedding][trace]") {
-    const std::string trace_path = std::string(kTraceDir) + "trace_embed_tokens.jsonl";
+    const std::string trace_path = get_trace_path("trace_embed_tokens.jsonl");
     if (!file_exists(kModelPath) || !file_exists(trace_path)) {
         WARN("embedding trace dependencies missing, skipping test");
         return;

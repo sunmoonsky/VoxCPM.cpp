@@ -6,6 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "voxcpm/tokenizer.h"
+#include "test_config.h"
 
 #include "gguf.h"
 
@@ -19,8 +20,7 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath =
-    "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
+const std::string kModelPath = get_model_path();
 
 bool file_exists(const std::string& path) {
     std::ifstream file(path, std::ios::binary);

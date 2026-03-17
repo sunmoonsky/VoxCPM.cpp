@@ -4,6 +4,7 @@
 #include "voxcpm/audio-vae.h"
 #include "voxcpm/backend.h"
 #include "voxcpm/context.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <chrono>
@@ -24,9 +25,9 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kTraceEncodePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_AudioVAE_encode.jsonl";
-constexpr const char* kTraceDecodePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_AudioVAE_decode.jsonl";
+const std::string kModelPath = get_model_path();
+const std::string kTraceEncodePath = get_trace_path("trace_AudioVAE_encode.jsonl");
+const std::string kTraceDecodePath = get_trace_path("trace_AudioVAE_decode.jsonl");
 constexpr float kTargetMaxDiff = 2e-4f;
 
 int cpu_thread_count() {

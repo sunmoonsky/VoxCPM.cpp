@@ -9,6 +9,7 @@
 #include "voxcpm/context.h"
 #include "voxcpm/voxcpm.h"
 #include "voxcpm/weight-store.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <cmath>
@@ -28,9 +29,9 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kPrefillTracePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_Prefill_one.jsonl";
-constexpr const char* kDecodeTracePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_Decode_one.jsonl";
+const std::string kModelPath = get_model_path();
+const std::string kPrefillTracePath = get_trace_path("trace_Prefill_one.jsonl");
+const std::string kDecodeTracePath = get_trace_path("trace_Decode_one.jsonl");
 constexpr int kPrefillSeqLen = 100;
 constexpr int kDecodeCacheSeqLen = 102;
 constexpr float kHiddenTolerance = 0.10f;

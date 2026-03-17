@@ -8,72 +8,46 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(test_audio_vae test_audio_vae.cpp)
-target_link_libraries(test_audio_vae PRIVATE voxcpm Catch2::Catch2WithMain)
+set(VOXCPM_DEFAULT_MODEL_PATH "${CMAKE_SOURCE_DIR}/models/voxcpm1.5.gguf" CACHE STRING "Default test model path")
+set(VOXCPM_DEFAULT_TRACE_DIR "${CMAKE_SOURCE_DIR}/tests/fixtures/trace" CACHE STRING "Default trace directory")
 
-add_test(NAME test_audio_vae COMMAND test_audio_vae)
-
-# Test data directory
-target_compile_definitions(test_audio_vae PRIVATE
-    VOXCPM_TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/VoxCPM/trace"
-)
+function(voxcpm_add_test target source)
+    add_executable(${target} ${source})
+    target_link_libraries(${target} PRIVATE voxcpm Catch2::Catch2WithMain)
+    target_compile_definitions(${target} PRIVATE
+        VOXCPM_DEFAULT_MODEL_PATH="${VOXCPM_DEFAULT_MODEL_PATH}"
+        VOXCPM_DEFAULT_TRACE_DIR="${VOXCPM_DEFAULT_TRACE_DIR}"
+    )
+    add_test(NAME ${target} COMMAND ${target})
+endfunction()
 
 # FSQ tests
-add_executable(test_fsq test_fsq.cpp)
-target_link_libraries(test_fsq PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_fsq COMMAND test_fsq)
+voxcpm_add_test(test_audio_vae test_audio_vae.cpp)
+voxcpm_add_test(test_fsq test_fsq.cpp)
 
 # Components tests
-add_executable(test_components test_components.cpp)
-target_link_libraries(test_components PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_components COMMAND test_components)
+voxcpm_add_test(test_components test_components.cpp)
 
 # MiniCPM tests
-add_executable(test_minicpm test_minicpm.cpp)
-target_link_libraries(test_minicpm PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_minicpm COMMAND test_minicpm)
+voxcpm_add_test(test_minicpm test_minicpm.cpp)
 
 # LocEnc tests
-add_executable(test_localenc test_localenc.cpp)
-target_link_libraries(test_localenc PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_localenc COMMAND test_localenc)
+voxcpm_add_test(test_localenc test_localenc.cpp)
 
 # LocDiT tests
-add_executable(test_locdit test_locdit.cpp)
-target_link_libraries(test_locdit PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_locdit COMMAND test_locdit)
+voxcpm_add_test(test_locdit test_locdit.cpp)
 
 # UnifiedCFM tests
-add_executable(test_unified_cfm test_unified_cfm.cpp)
-target_link_libraries(test_unified_cfm PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_unified_cfm COMMAND test_unified_cfm)
+voxcpm_add_test(test_unified_cfm test_unified_cfm.cpp)
 
 # VoxCPM prefill/decode tests
-add_executable(test_voxcpm test_voxcpm.cpp)
-target_link_libraries(test_voxcpm PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_voxcpm COMMAND test_voxcpm)
+voxcpm_add_test(test_voxcpm test_voxcpm.cpp)
 
 # Tokenizer tests
-add_executable(test_tokenizer test_tokenizer.cpp)
-target_link_libraries(test_tokenizer PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_tokenizer COMMAND test_tokenizer)
+voxcpm_add_test(test_tokenizer test_tokenizer.cpp)
 
 # Quantization tests
-add_executable(test_quantize test_quantize.cpp)
-target_link_libraries(test_quantize PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_quantize COMMAND test_quantize)
+voxcpm_add_test(test_quantize test_quantize.cpp)
 
 # imatrix tests
-add_executable(test_imatrix test_imatrix.cpp)
-target_link_libraries(test_imatrix PRIVATE voxcpm Catch2::Catch2WithMain)
-
-add_test(NAME test_imatrix COMMAND test_imatrix)
+voxcpm_add_test(test_imatrix test_imatrix.cpp)

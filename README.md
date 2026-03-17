@@ -24,6 +24,8 @@ cd build
 ctest --output-on-failure
 ```
 
+For configurable model/trace test paths and open-source collaboration setup, see [docs/TEST_SETUP.md](docs/TEST_SETUP.md).
+
 ## ggml Maintenance
 
 The project keeps local provenance for the current `ggml` import and patch flow:

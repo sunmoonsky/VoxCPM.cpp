@@ -9,6 +9,7 @@
 #include "voxcpm/context.h"
 #include "voxcpm/localenc.h"
 #include "voxcpm/minicpm.h"
+#include "test_config.h"
 
 #include <algorithm>
 #include <cmath>
@@ -26,8 +27,8 @@ namespace test {
 
 namespace {
 
-constexpr const char* kModelPath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/models/voxcpm1.5.gguf";
-constexpr const char* kTracePath = "/home/orangepi/Codes/ggbond/VoxCPM.cpp/tests/fixtures/trace/trace_LocalEnc.jsonl";
+const std::string kModelPath = get_model_path();
+const std::string kTracePath = get_trace_path("trace_LocalEnc.jsonl");
 constexpr float kTraceTolerance = 0.08f;
 constexpr float kMaxMismatchRate = 0.05f;
 
