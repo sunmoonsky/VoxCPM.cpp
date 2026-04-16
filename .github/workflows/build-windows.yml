@@ -44,11 +44,11 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
-          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并设置编译器标志
+          # 强制在根 CMakeLists.txt 中启用 CUDA 并设置必要的绕行标志
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
           $insertBlock = @"
-          `n# Force enable CUDA support with unsupported MSVC bypass`nset(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "" FORCE)`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
+          `n# Force enable CUDA support with unsupported MSVC bypass`nset(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "" FORCE)`nset(CMAKE_CUDA_COMPILER_ID_TEST_FLAGS "-allow-unsupported-compiler" CACHE STRING "" FORCE)`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
           "@
           $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1$insertBlock"
           Set-Content -Path $rootCMake -Value $cmakeContent
@@ -60,7 +60,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 设置环境变量 CUDAFLAGS，确保编译器检测阶段也能使用标志
+          # 环境变量作为额外保障
           $env:CUDAFLAGS = "-allow-unsupported-compiler"
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
