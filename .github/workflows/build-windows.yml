@@ -44,6 +44,7 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
+          # 1. 根 CMakeLists.txt 启用 CUDA 语言
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
           $insertBlock = @"
@@ -51,6 +52,16 @@ jobs:
           "@
           $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1$insertBlock"
           Set-Content -Path $rootCMake -Value $cmakeContent
+          
+          # 2. 强制 ggml 添加 CUDA 后端（直接修改 ggml/src/CMakeLists.txt）
+          $ggmlCMake = "third_party/ggml/src/CMakeLists.txt"
+          if (Test-Path $ggmlCMake) {
+              $ggmlContent = Get-Content $ggmlCMake -Raw
+              # 在文件末尾强制添加 add_subdirectory(ggml-cuda)
+              $ggmlContent += "`n# FORCE CUDA BACKEND`nif (GGML_CUDA)`n    add_subdirectory(ggml-cuda)`nendif()`n"
+              Set-Content -Path $ggmlCMake -Value $ggmlContent
+              Write-Host "Injected CUDA backend into $ggmlCMake"
+          }
           
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(benchmark\)', '# add_subdirectory(benchmark)' | Set-Content CMakeLists.txt
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt
