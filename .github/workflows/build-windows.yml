@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-2019   # 使用旧版镜像，内置 VS2019，与 CUDA 12.2 完全兼容
+    runs-on: windows-2022   # 使用 windows-2022 镜像，目前仍受支持
     
     steps:
       - name: Checkout Repository
@@ -17,7 +17,7 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.17
         id: cuda-toolkit
         with:
-          cuda: '12.2.0'
+          cuda: '12.4.0'   # 升级到 12.4.0，原生兼容 VS2022
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
@@ -107,7 +107,7 @@ jobs:
               Copy-Item "$cudaPath\bin\cublas64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
               Copy-Item "$cudaPath\bin\cublasLt64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
           } else {
-              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin"
+              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin"
               if (Test-Path $cudaBin) {
                   Copy-Item "$cudaBin\cudart64_12.dll" -Destination .\output\
                   Copy-Item "$cudaBin\cublas64_12.dll" -Destination .\output\
