@@ -51,7 +51,6 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 强制使用静态 CRT (/MT) 避免链接缺失 legacy stdio 函数
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DCMAKE_CXX_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
@@ -70,10 +69,7 @@ jobs:
       - name: Build Project
         run: |
           cd build
-          # 先构建所有默认目标（库等）
           nmake
-          # 显式构建 examples 中的可执行文件
-          nmake voxcpm_tts.exe voxcpm_quantize.exe voxcpm_imatrix.exe voxcpm-server.exe
 
       - name: List generated files (for debugging)
         run: |
@@ -86,16 +82,16 @@ jobs:
         run: |
           mkdir output
           
-          # 从 examples 子目录收集 exe（NMake 生成的位置）
+          # 从 examples 子目录收集 exe
           $exePath = ".\build\examples"
           if (Test-Path $exePath) {
               Get-ChildItem -Path $exePath -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ }
               Get-ChildItem -Path $exePath -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ }
           }
           
-          # 如果 examples 中没有，则从整个 build 树递归收集
+          # 后备：递归搜索整个 build 目录
           if (-not (Get-ChildItem .\output -Filter *.exe)) {
-              Write-Host "No exe in examples, searching entire build tree..."
+              Write-Host "No exe found in examples directory, searching entire build tree..."
               Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ -Force }
               Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ -Force }
           }
