@@ -26,11 +26,12 @@ jobs:
         with:
           arch: amd64
 
-      - name: Bruteforce Fixes for MSVC
+      - name: Bruteforce Fixes for MSVC (and force enable CUDA)
         run: |
           mkdir -p third_party/nlohmann
           Invoke-WebRequest -Uri "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" -OutFile "third_party/nlohmann/json.hpp"
           
+          # 1. 清理所有 CMakeLists.txt 中的 GCC 风格警告标志
           Get-ChildItem -Path . -Recurse -Include CMakeLists.txt | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace '-Wextra', ''
@@ -44,6 +45,17 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
+          # 2. 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
+          $rootCMake = "CMakeLists.txt"
+          $cmakeContent = Get-Content $rootCMake -Raw
+          # 在 project() 行后插入 enable_language(CUDA) 和 find_package(CUDAToolkit REQUIRED)
+          $insertBlock = @"
+          `n# Force enable CUDA support`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
+          "@
+          $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1$insertBlock"
+          Set-Content -Path $rootCMake -Value $cmakeContent
+          
+          # 3. 注释掉 benchmark 和 tests 子目录，避免 unistd.h 问题
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(benchmark\)', '# add_subdirectory(benchmark)' | Set-Content CMakeLists.txt
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt
 
@@ -51,11 +63,11 @@ jobs:
         run: |
           mkdir build
           cd build
+          # 使用 NMake Makefiles + 静态 CRT，避免链接问题
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DCMAKE_CXX_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DGGML_CUDA=ON `
-                -DCMAKE_CUDA_COMPILER="$env:CUDA_PATH\bin\nvcc.exe" `
                 -DCMAKE_CUDA_ARCHITECTURES="75;80;86;90" `
                 -DGGML_NATIVE=OFF `
                 -DCMAKE_CXX_STANDARD=20 `
@@ -82,29 +94,23 @@ jobs:
         run: |
           mkdir output
           
-          # 从 examples 子目录收集 exe
           $exePath = ".\build\examples"
           if (Test-Path $exePath) {
               Get-ChildItem -Path $exePath -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ }
               Get-ChildItem -Path $exePath -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ }
           }
           
-          # 后备：递归搜索整个 build 目录
           if (-not (Get-ChildItem .\output -Filter *.exe)) {
-              Write-Host "No exe found in examples directory, searching entire build tree..."
               Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ -Force }
               Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ -Force }
           }
           
-          # 复制 CUDA 运行时 DLL
           $cudaPath = "$env:CUDA_PATH"
           if ($cudaPath) {
-              Write-Host "CUDA_PATH = $cudaPath"
               Copy-Item "$cudaPath\bin\cudart64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
               Copy-Item "$cudaPath\bin\cublas64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
               Copy-Item "$cudaPath\bin\cublasLt64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
           } else {
-              Write-Host "CUDA_PATH not set, searching for CUDA DLLs..."
               $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin"
               if (Test-Path $cudaBin) {
                   Copy-Item "$cudaBin\cudart64_12.dll" -Destination .\output\
