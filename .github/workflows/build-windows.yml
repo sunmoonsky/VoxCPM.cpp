@@ -1,0 +1,47 @@
+name: Build VoxCPM.cpp for Windows (CUDA)
+
+on:
+  workflow_dispatch: # 允许手动触发编译
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # 极为关键：必须拉取 ggml 等子模块
+
+      - name: Setup CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.17
+        id: cuda-toolkit
+        with:
+          cuda: '12.2.0' # 适用于您的 RTX 4000 的稳定 CUDA 版本
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON
+
+      - name: Build Project
+        run: |
+          cd build
+          cmake --build . --config Release -j 4
+
+      - name: Collect Output Files
+        run: |
+          mkdir output
+          # 收集生成的可执行文件和必要的依赖库
+          Copy-Item -Path .\build\bin\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
+          Copy-Item -Path .\build\bin\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
+          # 如果路径不同，尝试备用路径
+          Copy-Item -Path .\build\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
+          Copy-Item -Path .\build\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxCPM-Windows-CUDA-Release
+          path: output/
