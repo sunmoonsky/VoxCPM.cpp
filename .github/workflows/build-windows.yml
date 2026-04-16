@@ -39,7 +39,6 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
-          # 注释掉 benchmark 和 tests 子目录，避免 Windows 下 unistd.h 等依赖问题
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(benchmark\)', '# add_subdirectory(benchmark)' | Set-Content CMakeLists.txt
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt
 
@@ -65,23 +64,41 @@ jobs:
 
       - name: List generated files (for debugging)
         run: |
-          Write-Host "=== Listing all .exe files in build directory ==="
-          Get-ChildItem -Path .\build -Recurse -Filter *.exe | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "=== Listing all .dll files in build directory ==="
-          Get-ChildItem -Path .\build -Recurse -Filter *.dll | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "=== All .exe files ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Write-Host $_.FullName }
+          Write-Host "=== All .dll files ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Write-Host $_.FullName }
 
       - name: Collect Output Files
         run: |
           mkdir output
-          # 收集所有 .exe 和 .dll 文件到 output 目录
-          Get-ChildItem -Path .\build -Recurse -Filter *.exe | ForEach-Object { Copy-Item $_.FullName -Destination .\output\ }
-          Get-ChildItem -Path .\build -Recurse -Filter *.dll | ForEach-Object { Copy-Item $_.FullName -Destination .\output\ }
           
-          # 可选：也复制模型文件或脚本，如果有需要
-          # Copy-Item -Path .\scripts\* -Destination .\output\ -Recurse -ErrorAction SilentlyContinue
+          # 复制所有生成的 exe
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ }
           
-          Write-Host "=== Files copied to output directory ==="
-          Get-ChildItem -Path .\output | ForEach-Object { Write-Host $_.Name }
+          # 复制项目自己生成的 dll（如果有）
+          Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ }
+          
+          # 复制 CUDA 运行时 DLL（必须）
+          $cudaPath = "$env:CUDA_PATH"
+          if ($cudaPath) {
+              Write-Host "CUDA_PATH = $cudaPath"
+              Copy-Item "$cudaPath\bin\cudart64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+              Copy-Item "$cudaPath\bin\cublas64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+              Copy-Item "$cudaPath\bin\cublasLt64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+          } else {
+              Write-Host "CUDA_PATH not set, searching for CUDA DLLs..."
+              # 备用方案：从 v12.2 标准安装路径查找
+              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin"
+              if (Test-Path $cudaBin) {
+                  Copy-Item "$cudaBin\cudart64_12.dll" -Destination .\output\
+                  Copy-Item "$cudaBin\cublas64_12.dll" -Destination .\output\
+                  Copy-Item "$cudaBin\cublasLt64_12.dll" -Destination .\output\
+              }
+          }
+          
+          Write-Host "=== Contents of output directory ==="
+          Get-ChildItem .\output | % { Write-Host $_.Name }
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
