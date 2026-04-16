@@ -1,7 +1,7 @@
 name: Build VoxCPM.cpp for Windows (CUDA)
 
 on:
-  workflow_dispatch: # 允许手动触发编译
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -11,20 +11,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive # 极为关键：必须拉取 ggml 等子模块
+          submodules: recursive
 
       - name: Setup CUDA Toolkit
         uses: Jimver/cuda-toolkit@v0.2.17
         id: cuda-toolkit
         with:
-          cuda: '12.2.0' # 适用于您的 RTX 4000 的稳定 CUDA 版本
+          cuda: '12.2.0'
+          # 放弃使用 GitHub 经常崩溃的缓存，改为直接下载网络包
+          method: 'network'
+          # 仅下载 ggml 编译必需的精简组件，加快速度并减少出错
+          sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
       - name: Configure CMake
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON
-
+          # 增加 -DGGML_NATIVE=OFF 防止 CI 服务器指令集冲突导致编译失败
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON -DGGML_NATIVE=OFF
+          
       - name: Build Project
         run: |
           cd build
@@ -33,10 +38,11 @@ jobs:
       - name: Collect Output Files
         run: |
           mkdir output
-          # 收集生成的可执行文件和必要的依赖库
+          # 打印一下编译产物目录，方便如果再次失败时我们排查路径
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe
+          
           Copy-Item -Path .\build\bin\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
           Copy-Item -Path .\build\bin\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
-          # 如果路径不同，尝试备用路径
           Copy-Item -Path .\build\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
           Copy-Item -Path .\build\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
 
