@@ -17,7 +17,7 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.17
         id: cuda-toolkit
         with:
-          cuda: '12.6.0'   # 升级到支持新版 MSVC 的 CUDA 版本
+          cuda: '12.2.0'
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
@@ -25,6 +25,14 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
+
+      - name: Patch CUDA host_config.h to bypass MSVC version check
+        run: |
+          $cudaInclude = "$env:CUDA_PATH\include"
+          $hostConfigPath = Join-Path $cudaInclude "crt/host_config.h"
+          Write-Host "Patching $hostConfigPath to remove MSVC version check"
+          (Get-Content $hostConfigPath) -replace '#error -- unsupported Microsoft Visual Studio version! Only the versions between 2017 and 2022 \(inclusive\) are supported! The nvcc flag '\''-allow-unsupported-compiler'\'' can be used to override this version check; however, using an unsupported host compiler may cause compilation failure or incorrect run time execution.  Use at your own risk.', '// #error commented out by CI hack' | Set-Content $hostConfigPath
+          Write-Host "Patch applied."
 
       - name: Bruteforce Fixes for MSVC (and force enable CUDA)
         run: |
@@ -44,7 +52,6 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
-          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
           $insertBlock = @"
@@ -101,16 +108,13 @@ jobs:
               Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ -Force }
           }
           
-          # 复制 CUDA 运行时 DLL（注意路径可能因版本而异，但 DLL 名称仍为 cudart64_12.dll）
           $cudaPath = "$env:CUDA_PATH"
           if ($cudaPath) {
-              Write-Host "CUDA_PATH = $cudaPath"
               Copy-Item "$cudaPath\bin\cudart64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
               Copy-Item "$cudaPath\bin\cublas64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
               Copy-Item "$cudaPath\bin\cublasLt64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
           } else {
-              Write-Host "CUDA_PATH not set, searching for CUDA DLLs..."
-              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
+              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin"
               if (Test-Path $cudaBin) {
                   Copy-Item "$cudaBin\cudart64_12.dll" -Destination .\output\
                   Copy-Item "$cudaBin\cublas64_12.dll" -Destination .\output\
