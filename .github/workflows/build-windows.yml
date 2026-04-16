@@ -70,6 +70,59 @@ jobs:
       - name: Build Project
         run: |
           cd build
+          # 先构建所有默认目标（库等）
           nmake
+          # 显式构建 examples 中的可执行文件
+          nmake voxcpm_tts.exe voxcpm_quantize.exe voxcpm_imatrix.exe voxcpm-server.exe
 
-      # ... 后续步骤保持不变（列表、收集、上传）
+      - name: List generated files (for debugging)
+        run: |
+          Write-Host "=== All .exe files in build tree ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Write-Host $_.FullName }
+          Write-Host "=== All .dll files in build tree ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Write-Host $_.FullName }
+
+      - name: Collect Output Files
+        run: |
+          mkdir output
+          
+          # 从 examples 子目录收集 exe（NMake 生成的位置）
+          $exePath = ".\build\examples"
+          if (Test-Path $exePath) {
+              Get-ChildItem -Path $exePath -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ }
+              Get-ChildItem -Path $exePath -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ }
+          }
+          
+          # 如果 examples 中没有，则从整个 build 树递归收集
+          if (-not (Get-ChildItem .\output -Filter *.exe)) {
+              Write-Host "No exe in examples, searching entire build tree..."
+              Get-ChildItem -Path .\build -Recurse -Filter *.exe | % { Copy-Item $_.FullName -Destination .\output\ -Force }
+              Get-ChildItem -Path .\build -Recurse -Filter *.dll | % { Copy-Item $_.FullName -Destination .\output\ -Force }
+          }
+          
+          # 复制 CUDA 运行时 DLL
+          $cudaPath = "$env:CUDA_PATH"
+          if ($cudaPath) {
+              Write-Host "CUDA_PATH = $cudaPath"
+              Copy-Item "$cudaPath\bin\cudart64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+              Copy-Item "$cudaPath\bin\cublas64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+              Copy-Item "$cudaPath\bin\cublasLt64_12.dll" -Destination .\output\ -ErrorAction SilentlyContinue
+          } else {
+              Write-Host "CUDA_PATH not set, searching for CUDA DLLs..."
+              $cudaBin = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin"
+              if (Test-Path $cudaBin) {
+                  Copy-Item "$cudaBin\cudart64_12.dll" -Destination .\output\
+                  Copy-Item "$cudaBin\cublas64_12.dll" -Destination .\output\
+                  Copy-Item "$cudaBin\cublasLt64_12.dll" -Destination .\output\
+              }
+          }
+          
+          Write-Host "=== Contents of output directory ==="
+          Get-ChildItem .\output | % { Write-Host $_.Name }
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxCPM-Windows-CUDA-Release
+          path: output/
+          if-no-files-found: error
