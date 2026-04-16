@@ -46,8 +46,10 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 改用 Ninja 生成器，绕过 Visual Studio 的 CUDA 工具集问题
+          # 明确指定使用 MSVC 编译器
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release `
+                -DCMAKE_C_COMPILER="cl" `
+                -DCMAKE_CXX_COMPILER="cl" `
                 -DGGML_CUDA=ON `
                 -DCMAKE_CUDA_COMPILER="$env:CUDA_PATH\bin\nvcc.exe" `
                 -DCMAKE_CUDA_ARCHITECTURES="75;80;86;90" `
@@ -59,6 +61,7 @@ jobs:
                 -DVOXCPM_BUILD_TESTS=OFF `
                 -DVOXCPM_BUILD_BENCHMARKS=OFF `
                 -DGGML_BUILD_TESTS=OFF
+        shell: pwsh
 
       - name: Build Project
         run: |
