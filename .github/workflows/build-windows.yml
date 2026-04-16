@@ -31,7 +31,6 @@ jobs:
           mkdir -p third_party/nlohmann
           Invoke-WebRequest -Uri "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" -OutFile "third_party/nlohmann/json.hpp"
           
-          # 1. 清理所有 CMakeLists.txt 中的 GCC 风格警告标志
           Get-ChildItem -Path . -Recurse -Include CMakeLists.txt | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace '-Wextra', ''
@@ -45,17 +44,15 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
-          # 2. 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
+          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
-          # 在 project() 行后插入 enable_language(CUDA) 和 find_package(CUDAToolkit REQUIRED)
           $insertBlock = @"
           `n# Force enable CUDA support`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
           "@
           $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1$insertBlock"
           Set-Content -Path $rootCMake -Value $cmakeContent
           
-          # 3. 注释掉 benchmark 和 tests 子目录，避免 unistd.h 问题
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(benchmark\)', '# add_subdirectory(benchmark)' | Set-Content CMakeLists.txt
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt
 
@@ -63,11 +60,12 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 使用 NMake Makefiles + 静态 CRT，避免链接问题
+          # 关键：添加 -allow-unsupported-compiler 标志以绕过 MSVC 版本检查
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DCMAKE_CXX_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DGGML_CUDA=ON `
+                -DCMAKE_CUDA_FLAGS="-allow-unsupported-compiler" `
                 -DCMAKE_CUDA_ARCHITECTURES="75;80;86;90" `
                 -DGGML_NATIVE=OFF `
                 -DCMAKE_CXX_STANDARD=20 `
