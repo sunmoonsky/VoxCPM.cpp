@@ -26,6 +26,7 @@ jobs:
           mkdir -p third_party/nlohmann
           Invoke-WebRequest -Uri "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" -OutFile "third_party/nlohmann/json.hpp"
           
+          # 1. 修复所有 CMakeLists.txt 中的编译器警告和 C++ 标准
           Get-ChildItem -Path . -Recurse -Include CMakeLists.txt | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace '-Wextra', ''
@@ -39,6 +40,14 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
+          # 2. 强制在根 CMakeLists.txt 中启用 CUDA 语言
+          $rootCMake = "CMakeLists.txt"
+          $cmakeContent = Get-Content $rootCMake -Raw
+          # 在 project() 行后插入 enable_language(CUDA)
+          $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1`nenable_language(CUDA)"
+          Set-Content -Path $rootCMake -Value $cmakeContent
+          
+          # 3. 注释掉 benchmark 和 tests 子目录，避免 unistd.h 问题
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(benchmark\)', '# add_subdirectory(benchmark)' | Set-Content CMakeLists.txt
           (Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt
 
@@ -46,7 +55,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 显式指定 CUDA 编译器与工具包路径，强制启用 CUDA
+          # 显式指定 CUDA 编译器与工具包路径，并启用 CUDA
           cmake .. -G "Visual Studio 17 2022" -A x64 `
                 -DGGML_CUDA=ON `
                 -DCUDAToolkit_ROOT="$env:CUDA_PATH" `
