@@ -21,9 +21,14 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
+      # 新增步骤：通过 vcpkg 安装缺失的 nlohmann-json 库
+      - name: Install vcpkg dependencies (nlohmann-json)
+        run: |
+          vcpkg install nlohmann-json:x64-windows
+          vcpkg integrate install
+
       - name: Fix MSVC Flags (Remove Linux-specific compiler flags)
         run: |
-          # 遍历所有 CMake 配置文件，删掉微软 MSVC 不认识的 GCC 专属参数
           Get-ChildItem -Path . -Recurse -Include CMakeLists.txt, *.cmake | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace '-Wextra', ''
@@ -37,7 +42,15 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON -DGGML_NATIVE=OFF
+          # -DCMAKE_CXX_STANDARD=20：强制要求使用 C++20，解决 C7555 错误
+          # -DCMAKE_TOOLCHAIN_FILE：告诉 CMake 去哪里找刚才安装的 json 库
+          # -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES"：强制暴露 M_PI_2 等数学常量，解决 C2065 错误
+          cmake .. -G "Visual Studio 17 2022" -A x64 `
+                -DGGML_CUDA=ON `
+                -DGGML_NATIVE=OFF `
+                -DCMAKE_CXX_STANDARD=20 `
+                -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES" `
+                -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
           
       - name: Build Project
         run: |
@@ -47,7 +60,6 @@ jobs:
       - name: Collect Output Files
         run: |
           mkdir output
-          # 收集生成的 .exe 和 .dll
           Copy-Item -Path .\build\bin\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
           Copy-Item -Path .\build\bin\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
           Copy-Item -Path .\build\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
