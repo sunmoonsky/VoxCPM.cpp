@@ -63,13 +63,25 @@ jobs:
           cd build
           cmake --build . --config Release -j 4
 
+      - name: List generated files (for debugging)
+        run: |
+          Write-Host "=== Listing all .exe files in build directory ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "=== Listing all .dll files in build directory ==="
+          Get-ChildItem -Path .\build -Recurse -Filter *.dll | ForEach-Object { Write-Host $_.FullName }
+
       - name: Collect Output Files
         run: |
           mkdir output
-          Copy-Item -Path .\build\bin\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
-          Copy-Item -Path .\build\bin\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
-          Copy-Item -Path .\build\Release\*.exe -Destination .\output\ -ErrorAction SilentlyContinue
-          Copy-Item -Path .\build\Release\*.dll -Destination .\output\ -ErrorAction SilentlyContinue
+          # 收集所有 .exe 和 .dll 文件到 output 目录
+          Get-ChildItem -Path .\build -Recurse -Filter *.exe | ForEach-Object { Copy-Item $_.FullName -Destination .\output\ }
+          Get-ChildItem -Path .\build -Recurse -Filter *.dll | ForEach-Object { Copy-Item $_.FullName -Destination .\output\ }
+          
+          # 可选：也复制模型文件或脚本，如果有需要
+          # Copy-Item -Path .\scripts\* -Destination .\output\ -Recurse -ErrorAction SilentlyContinue
+          
+          Write-Host "=== Files copied to output directory ==="
+          Get-ChildItem -Path .\output | ForEach-Object { Write-Host $_.Name }
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
