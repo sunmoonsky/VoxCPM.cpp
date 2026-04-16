@@ -44,11 +44,11 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
-          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
+          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并设置编译器标志
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
           $insertBlock = @"
-          `n# Force enable CUDA support`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
+          `n# Force enable CUDA support with unsupported MSVC bypass`nset(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "" FORCE)`nenable_language(CUDA)`nfind_package(CUDAToolkit REQUIRED)`n
           "@
           $cmakeContent = $cmakeContent -replace '(project\([^)]+\))', "`$1$insertBlock"
           Set-Content -Path $rootCMake -Value $cmakeContent
@@ -60,12 +60,12 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 关键：添加 -allow-unsupported-compiler 标志以绕过 MSVC 版本检查
+          # 设置环境变量 CUDAFLAGS，确保编译器检测阶段也能使用标志
+          $env:CUDAFLAGS = "-allow-unsupported-compiler"
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DCMAKE_CXX_FLAGS_RELEASE="/MT /O2 /Ob2 /DNDEBUG" `
                 -DGGML_CUDA=ON `
-                -DCMAKE_CUDA_FLAGS="-allow-unsupported-compiler" `
                 -DCMAKE_CUDA_ARCHITECTURES="75;80;86;90" `
                 -DGGML_NATIVE=OFF `
                 -DCMAKE_CXX_STANDARD=20 `
