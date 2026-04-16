@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019   # 使用旧版镜像，内置 VS2019，与 CUDA 12.2 完全兼容
     
     steps:
       - name: Checkout Repository
@@ -26,14 +26,6 @@ jobs:
         with:
           arch: amd64
 
-      - name: Patch CUDA host_config.h to bypass MSVC version check
-        run: |
-          $cudaInclude = "$env:CUDA_PATH\include"
-          $hostConfigPath = Join-Path $cudaInclude "crt/host_config.h"
-          Write-Host "Patching $hostConfigPath to remove MSVC version check"
-          (Get-Content $hostConfigPath) -replace '#error -- unsupported Microsoft Visual Studio version! Only the versions between 2017 and 2022 \(inclusive\) are supported! The nvcc flag '\''-allow-unsupported-compiler'\'' can be used to override this version check; however, using an unsupported host compiler may cause compilation failure or incorrect run time execution.  Use at your own risk.', '// #error commented out by CI hack' | Set-Content $hostConfigPath
-          Write-Host "Patch applied."
-
       - name: Bruteforce Fixes for MSVC (and force enable CUDA)
         run: |
           mkdir -p third_party/nlohmann
@@ -52,6 +44,7 @@ jobs:
               Set-Content -Path $_.FullName -Value $content
           }
           
+          # 强制在根 CMakeLists.txt 中启用 CUDA 语言并查找 CUDA 工具包
           $rootCMake = "CMakeLists.txt"
           $cmakeContent = Get-Content $rootCMake -Raw
           $insertBlock = @"
