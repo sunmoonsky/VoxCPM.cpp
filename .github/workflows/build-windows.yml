@@ -21,20 +21,27 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
-      # 新增步骤：通过 vcpkg 安装缺失的 nlohmann-json 库
-      - name: Install vcpkg dependencies (nlohmann-json)
+      # 终极暴力修复步骤：修改代码级配置
+      - name: Bruteforce Fixes for MSVC
         run: |
-          vcpkg install nlohmann-json:x64-windows
-          vcpkg integrate install
-
-      - name: Fix MSVC Flags (Remove Linux-specific compiler flags)
-        run: |
-          Get-ChildItem -Path . -Recurse -Include CMakeLists.txt, *.cmake | ForEach-Object {
+          # 1. 暴力下载单文件版的 nlohmann/json 放到源码能够找到的根目录下
+          mkdir -p third_party/nlohmann
+          Invoke-WebRequest -Uri "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" -OutFile "third_party/nlohmann/json.hpp"
+          
+          # 2. 暴力替换所有 CMakeLists.txt，强制开启 C++20，清理不兼容参数，并开启 /EHsc
+          Get-ChildItem -Path . -Recurse -Include CMakeLists.txt | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
+              # 替换 Linux 专属参数
               $content = $content -replace '-Wextra', ''
               $content = $content -replace '-Wall', ''
               $content = $content -replace '-Wpedantic', ''
               $content = $content -replace '-Werror', ''
+              # 暴力升级 C++ 标准为 20
+              $content = $content -replace 'set\(CMAKE_CXX_STANDARD 11\)', 'set(CMAKE_CXX_STANDARD 20)'
+              $content = $content -replace 'set\(CMAKE_CXX_STANDARD 14\)', 'set(CMAKE_CXX_STANDARD 20)'
+              $content = $content -replace 'set\(CMAKE_CXX_STANDARD 17\)', 'set(CMAKE_CXX_STANDARD 20)'
+              # 强行给 MSVC 添加 C++20 和 /EHsc 参数
+              $content = $content + "`nif(MSVC)`n  add_compile_options(/std:c++20 /EHsc /Zc:__cplusplus)`n  include_directories(`"`${CMAKE_SOURCE_DIR}/third_party`")`nendif()`n"
               Set-Content -Path $_.FullName -Value $content
           }
 
@@ -42,15 +49,11 @@ jobs:
         run: |
           mkdir build
           cd build
-          # -DCMAKE_CXX_STANDARD=20：强制要求使用 C++20，解决 C7555 错误
-          # -DCMAKE_TOOLCHAIN_FILE：告诉 CMake 去哪里找刚才安装的 json 库
-          # -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES"：强制暴露 M_PI_2 等数学常量，解决 C2065 错误
           cmake .. -G "Visual Studio 17 2022" -A x64 `
                 -DGGML_CUDA=ON `
                 -DGGML_NATIVE=OFF `
                 -DCMAKE_CXX_STANDARD=20 `
-                -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES" `
-                -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES /EHsc /std:c++20" 
           
       - name: Build Project
         run: |
