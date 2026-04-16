@@ -21,6 +21,11 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
+      - name: Setup MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
       - name: Bruteforce Fixes for MSVC
         run: |
           mkdir -p third_party/nlohmann
@@ -46,10 +51,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          # 明确指定使用 MSVC 编译器
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release `
-                -DCMAKE_C_COMPILER="cl" `
-                -DCMAKE_CXX_COMPILER="cl" `
+          # 使用 NMake Makefiles 生成器，避免 Visual Studio 的 CUDA 工具集问题
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release `
                 -DGGML_CUDA=ON `
                 -DCMAKE_CUDA_COMPILER="$env:CUDA_PATH\bin\nvcc.exe" `
                 -DCMAKE_CUDA_ARCHITECTURES="75;80;86;90" `
@@ -61,12 +64,11 @@ jobs:
                 -DVOXCPM_BUILD_TESTS=OFF `
                 -DVOXCPM_BUILD_BENCHMARKS=OFF `
                 -DGGML_BUILD_TESTS=OFF
-        shell: pwsh
 
       - name: Build Project
         run: |
           cd build
-          cmake --build . -j 4
+          nmake
 
       - name: List generated files (for debugging)
         run: |
