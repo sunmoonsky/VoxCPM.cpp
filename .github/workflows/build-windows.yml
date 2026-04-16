@@ -21,26 +21,20 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev"]'
 
-      # 终极暴力修复步骤：修改代码级配置
       - name: Bruteforce Fixes for MSVC
         run: |
-          # 1. 暴力下载单文件版的 nlohmann/json 放到源码能够找到的根目录下
           mkdir -p third_party/nlohmann
           Invoke-WebRequest -Uri "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" -OutFile "third_party/nlohmann/json.hpp"
           
-          # 2. 暴力替换所有 CMakeLists.txt，强制开启 C++20，清理不兼容参数，并开启 /EHsc
           Get-ChildItem -Path . -Recurse -Include CMakeLists.txt | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
-              # 替换 Linux 专属参数
               $content = $content -replace '-Wextra', ''
               $content = $content -replace '-Wall', ''
               $content = $content -replace '-Wpedantic', ''
               $content = $content -replace '-Werror', ''
-              # 暴力升级 C++ 标准为 20
               $content = $content -replace 'set\(CMAKE_CXX_STANDARD 11\)', 'set(CMAKE_CXX_STANDARD 20)'
               $content = $content -replace 'set\(CMAKE_CXX_STANDARD 14\)', 'set(CMAKE_CXX_STANDARD 20)'
               $content = $content -replace 'set\(CMAKE_CXX_STANDARD 17\)', 'set(CMAKE_CXX_STANDARD 20)'
-              # 强行给 MSVC 添加 C++20 和 /EHsc 参数
               $content = $content + "`nif(MSVC)`n  add_compile_options(/std:c++20 /EHsc /Zc:__cplusplus)`n  include_directories(`"`${CMAKE_SOURCE_DIR}/third_party`")`nendif()`n"
               Set-Content -Path $_.FullName -Value $content
           }
@@ -49,11 +43,17 @@ jobs:
         run: |
           mkdir build
           cd build
+          # 新增参数：关闭所有测试、跑分，只编译主程序！
           cmake .. -G "Visual Studio 17 2022" -A x64 `
                 -DGGML_CUDA=ON `
                 -DGGML_NATIVE=OFF `
                 -DCMAKE_CXX_STANDARD=20 `
-                -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES /EHsc /std:c++20" 
+                -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES /EHsc /std:c++20" `
+                -DBUILD_TESTING=OFF `
+                -DBUILD_SHARED_LIBS=OFF `
+                -DVOXCPM_BUILD_TESTS=OFF `
+                -DVOXCPM_BUILD_BENCHMARKS=OFF `
+                -DGGML_BUILD_TESTS=OFF
           
       - name: Build Project
         run: |
